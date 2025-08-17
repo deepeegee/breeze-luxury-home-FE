@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from '@/lib/useAuth';
-import { Spinner } from '@/components/common/Spinner';
+import Spinner from '@/components/common/Spinner';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
