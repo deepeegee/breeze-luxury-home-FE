@@ -4,7 +4,6 @@ import Footer from "@/components/home/home-v6/footer";
 import Header from "@/components/home/home-v6/Header";
 import Image from "next/image";
 import FindHomeBlock from "@/components/home/home-v6/FindHomeBlock";
-import Agents from "@/components/home/home-v6/Agents";
 import Pricing from "@/components/home/home-v6/Pricing";
 import FeatureProperties from "@/components/home/home-v6/FeatureProperties";
 import Testimonial from "@/components/home/home-v6/Testimonial";
