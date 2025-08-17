@@ -1,0 +1,85 @@
+.floating-whatsapp-btn {
+  position: fixed;
+  bottom: 105px; /* 45px (scrollToHome) + 50px (button height) + 10px (gap) */
+  right: 45px; /* Same as scrollToHome */
+  z-index: 9; /* Same as scrollToHome */
+  transition: all 0.4s ease; /* Same as scrollToHome */
+}
+
+.whatsapp-btn {
+  width: 50px; /* Same as scrollToHome */
+  height: 50px; /* Same as scrollToHome */
+  border-radius: 50%; /* Same as scrollToHome */
+  background: #25D366; /* WhatsApp brand color */
+  border: 1px solid #25D366; /* Same border style as scrollToHome */
+  color: white;
+  font-size: 20px; /* Adjusted for WhatsApp icon */
+  cursor: pointer;
+  box-shadow: 0px 1px 4px 0px rgba(37, 211, 102, 0.3); /* Same shadow style as scrollToHome */
+  transition: all 0.4s ease; /* Same as scrollToHome */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 50px; /* Same as scrollToHome */
+  text-align: center; /* Same as scrollToHome */
+}
+
+.whatsapp-btn:hover {
+  background: #128C7E; /* Darker WhatsApp color on hover */
+  border-color: #128C7E;
+  color: white;
+  transform: scale(1.05); /* Subtle scale effect */
+  box-shadow: 0px 2px 8px 0px rgba(37, 211, 102, 0.4); /* Enhanced shadow on hover */
+}
+
+.whatsapp-btn:active {
+  transform: scale(0.98);
+}
+
+/* Responsive Design - matching scrollToHome behavior */
+@media (max-width: 768px) {
+  .floating-whatsapp-btn {
+    bottom: 105px; /* Keep same positioning above scrollToHome */
+    right: 45px; /* Keep same as scrollToHome */
+  }
+  
+  .whatsapp-btn {
+    width: 50px; /* Keep same size */
+    height: 50px;
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-whatsapp-btn {
+    bottom: 105px; /* Keep same positioning above scrollToHome */
+    right: 45px; /* Keep same as scrollToHome */
+  }
+  
+  .whatsapp-btn {
+    width: 50px; /* Keep same size */
+    height: 50px;
+    font-size: 16px;
+  }
+}
+
+/* Animation for better UX */
+@keyframes pulse {
+  0% {
+    box-shadow: 0px 1px 4px 0px rgba(37, 211, 102, 0.3);
+  }
+  50% {
+    box-shadow: 0px 1px 8px 0px rgba(37, 211, 102, 0.5);
+  }
+  100% {
+    box-shadow: 0px 1px 4px 0px rgba(37, 211, 102, 0.3);
+  }
+}
+
+.whatsapp-btn {
+  animation: pulse 2s infinite;
+}
+
+.whatsapp-btn:hover {
+  animation: none;
+} 
