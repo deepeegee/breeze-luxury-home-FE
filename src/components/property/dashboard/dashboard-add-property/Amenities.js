@@ -1,51 +1,37 @@
+"use client";
 import React from "react";
+import { AMENITY_GROUPS } from "@/constants/propertyOptions";
 
-const amenitiesData = {
-  column1: [
-    { label: "Attic", defaultChecked: false },
-    { label: "Basketball court", defaultChecked: true },
-    { label: "Air Conditioning", defaultChecked: true },
-    { label: "Lawn", defaultChecked: true },
-    { label: "Swimming Pool", defaultChecked: false },
-    { label: "Barbeque", defaultChecked: false },
-    { label: "Microwave", defaultChecked: false },
-  ],
-  column2: [
-    { label: "TV Cable", defaultChecked: false },
-    { label: "Dryer", defaultChecked: true },
-    { label: "Outdoor Shower", defaultChecked: true },
-    { label: "Washer", defaultChecked: true },
-    { label: "Gym", defaultChecked: false },
-    { label: "Ocean view", defaultChecked: false },
-    { label: "Private space", defaultChecked: false },
-  ],
-  column3: [
-    { label: "Lake view", defaultChecked: false },
-    { label: "Wine cellar", defaultChecked: true },
-    { label: "Front yard", defaultChecked: true },
-    { label: "Refrigerator", defaultChecked: true },
-    { label: "WiFi", defaultChecked: false },
-    { label: "Laundry", defaultChecked: false },
-    { label: "Sauna", defaultChecked: false },
-  ],
-};
+// safer id to handle punctuation/special chars (e.g. curly apostrophes)
+const slug = (s) =>
+  String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 const Amenities = () => {
   return (
     <div className="row">
-      {Object.keys(amenitiesData).map((columnKey, index) => (
-        <div key={index} className="col-sm-6 col-lg-3 col-xxl-2">
+      {AMENITY_GROUPS.map((group) => (
+        <div key={group.label} className="col-12 mb20">
+          <h6 className="list-title mb10">{group.label}</h6>
           <div className="checkbox-style1">
-            {amenitiesData[columnKey].map((amenity, amenityIndex) => (
-              <label key={amenityIndex} className="custom_checkbox">
-                {amenity.label}
-                <input
-                  type="checkbox"
-                  defaultChecked={amenity.defaultChecked}
-                />
-                <span className="checkmark" />
-              </label>
-            ))}
+            <div className="row">
+              {group.items.map((label) => {
+                const id = `amenity-${slug(group.label)}-${slug(label)}`;
+                return (
+                  <div key={id} className="col-sm-6 col-lg-4 col-xxl-3">
+                    <label className="custom_checkbox" htmlFor={id}>
+                      {label}
+                      <input
+                        id={id}
+                        type="checkbox"
+                        name="amenities"
+                        value={label}
+                      />
+                      <span className="checkmark" />
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       ))}

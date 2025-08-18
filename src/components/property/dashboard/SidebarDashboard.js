@@ -53,11 +53,6 @@ const SidebarDashboard = () => {
           icon: "flaticon-search-2",
           text: "Saved Search",
         },
-        {
-          href: "/dashboard-reviews",
-          icon: "flaticon-review",
-          text: "Reviews",
-        },
       ],
     },
     {

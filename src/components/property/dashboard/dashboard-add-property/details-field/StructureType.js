@@ -3,10 +3,10 @@ import React, { useEffect, useState } from "react";
 import Select from "react-select";
 
 const structureTypeOptions = [
-  { value: "Apartments", label: "Apartments" },
-  { value: "Bungalow", label: "Bungalow" },
-  { value: "Houses", label: "Houses" },
-  { value: "Loft", label: "Loft" },
+  { value: "Brick", label: "Brick" },
+  { value: "Wood", label: "Wood" },
+  { value: "Concrete", label: "Concrete" },
+  { value: "Other", label: "Other" },
 ];
 
 const customStyles = {
@@ -14,9 +14,7 @@ const customStyles = {
     ...styles,
     backgroundColor: isSelected
       ? "#eb6753"
-      : isHovered
-      ? "#eb675312"
-      : isFocused
+      : (isHovered || isFocused)
       ? "#eb675312"
       : undefined,
   }),
@@ -24,26 +22,27 @@ const customStyles = {
 
 const StructureType = () => {
   const [showSelect, setShowSelect] = useState(false);
-  useEffect(() => {
-    setShowSelect(true);
-  }, []);
+  const [value, setValue] = useState("");
+
+  useEffect(() => setShowSelect(true), []);
+
   return (
     <div className="col-sm-6 col-xl-4">
+      <input type="hidden" name="structureType" value={value} />
       <div className="mb20">
-        <label className="heading-color ff-heading fw600 mb10">
-          Structure type
-        </label>
+        <label className="heading-color ff-heading fw600 mb10">Structure type</label>
         <div className="location-area">
           {showSelect && (
             <Select
               styles={customStyles}
               className="select-custom pl-0"
               classNamePrefix="select"
-              required
-              isMulti
-              defaultValue={[structureTypeOptions[0]]}
-              name="structureType"
+              placeholder="Select structure type"
               options={structureTypeOptions}
+              isMulti={false}
+              value={value ? structureTypeOptions.find((o) => o.value === value) : null}
+              onChange={(opt) => setValue(opt?.value ?? "")}
+              isClearable
             />
           )}
         </div>

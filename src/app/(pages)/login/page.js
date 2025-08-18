@@ -4,7 +4,7 @@ import Link from "next/link";
 import React from "react";
 
 export const metadata = {
-  title: "Login  || Breeze Luxury Homes - Real Estate NextJS Template",
+  title: "Login  ||  Breeze Luxury Homes",
 };
 
 const Login = () => {

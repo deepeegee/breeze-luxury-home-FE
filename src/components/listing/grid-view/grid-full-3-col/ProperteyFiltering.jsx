@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import ListingSidebar from '../../sidebar'
 import AdvanceFilterModal from '@/components/common/advance-filter-two'
 import TopFilterBar from './TopFilterBar'
@@ -9,10 +10,39 @@ import PaginationTwo from "../../PaginationTwo"
 import { useListings } from "@/lib/useApi"
 import Spinner from '@/components/common/Spinner'
 
-// import listings from "@/data/listings";
-
 export default function ProperteyFiltering() {
-  const { data: listings = [], isLoading, error } = useListings()
+  const searchParams = useSearchParams()
+
+  // Stable key (avoid infinite loops)
+  const searchKey = useMemo(() => searchParams?.toString() ?? '', [searchParams])
+  const sp = useMemo(() => new URLSearchParams(searchKey), [searchKey])
+
+  // Build server query from URL params, stripping empty values.
+  // NOTE: we DO NOT forward Buy/Rent to the API until backend supports it.
+  const serverParams = useMemo(() => {
+    const get = (k) => sp.get(k)
+    const out = {}
+    const put = (k, v) => {
+      if (v == null) return
+      const s = String(v).trim()
+      if (!s || s === 'undefined' || s === 'null') return
+      out[k] = s
+    }
+    put('q',          get('q'))
+    put('city',       get('location'))
+    put('minPrice',   get('minPrice'))
+    put('maxPrice',   get('maxPrice'))
+    put('bedrooms',   get('beds'))
+    put('bathrooms',  get('baths'))
+    put('category',   get('type'))
+    put('propertyId', get('propertyId'))
+    // DO NOT map status=Buy|Rent to listedIn for now
+    return out
+  }, [sp])
+
+  const hookParams = Object.keys(serverParams).length ? serverParams : undefined
+  const { data: listings = [], isLoading, error } = useListings(hookParams)
+
   const [filteredData, setFilteredData] = useState([])
   const [sortedFilteredData, setSortedFilteredData] = useState([])
   const [pageItems, setPageItems] = useState([])
@@ -22,7 +52,7 @@ export default function ProperteyFiltering() {
   const [pageNumber, setPageNumber] = useState(1)
   const [colstyle, setColstyle] = useState(false)
 
-  const [listingStatus, setListingStatus] = useState('All')
+  const [listingStatus, setListingStatus] = useState('All') // Buy | Rent | All
   const [propertyTypes, setPropertyTypes] = useState([])
   const [priceRange, setPriceRange] = useState([0, 100000])
   const [bedrooms, setBedrooms] = useState(0)
@@ -33,70 +63,44 @@ export default function ProperteyFiltering() {
   const [categories, setCategories] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
 
-  const handlelistingStatus = (elm) => {
-    setListingStatus(elm);
-  };
-
+  const handlelistingStatus = (elm) => setListingStatus(elm)
   const handlepropertyTypes = (elm) => {
     if (elm == "All") {
-      setPropertyTypes([]);
+      setPropertyTypes([])
     } else {
       setPropertyTypes((pre) =>
-        pre.includes(elm) ? [...pre.filter((el) => el != elm)] : [...pre, elm]
-      );
+        pre.includes(elm) ? pre.filter((el) => el != elm) : [...pre, elm]
+      )
     }
-  };
-
-  const handlepriceRange = (elm) => {
-    setPriceRange(elm);
-  };
-
-  const handlebedrooms = (elm) => {
-    setBedrooms(elm);
-  };
-
-  const handlebathroms = (elm) => {
-    setBathroms(elm);
-  };
-
-  const handlelocation = (elm) => {
-    setLocation(elm);
-  };
-
-  const handlesquirefeet = (elm) => {
-    setSquirefeet(elm);
-  };
-
-  const handleyearBuild = (elm) => {
-    setyearBuild(elm);
-  };
-
+  }
+  const handlepriceRange = (elm) => setPriceRange(elm)
+  const handlebedrooms = (elm) => setBedrooms(elm)
+  const handlebathroms = (elm) => setBathroms(elm)
+  const handlelocation = (elm) => setLocation(elm)
+  const handlesquirefeet = (elm) => setSquirefeet(elm)
+  const handleyearBuild = (elm) => setyearBuild(elm)
   const handlecategories = (elm) => {
     if (elm == "All") {
-      setCategories([]);
+      setCategories([])
     } else {
       setCategories((pre) =>
-        pre.includes(elm) ? [...pre.filter((el) => el != elm)] : [...pre, elm]
-      );
+        pre.includes(elm) ? pre.filter((el) => el != elm) : [...pre, elm]
+      )
     }
-  };
+  }
 
   const resetFilter = () => {
-    setListingStatus('All');
-    setPropertyTypes([]);
-    setPriceRange([0, 100000]);
-    setBedrooms(0);
-    setBathroms(0);
-    setLocation('All Cities');
-    setSquirefeet([]);
-    setyearBuild([0, 2050]);
-    setCategories([]);
-    setSearchQuery('');
-    if (listings.length > 0) {
-      setFilteredData(listings);
-      setSortedFilteredData(listings);
-    }
-  };
+    setListingStatus('All')
+    setPropertyTypes([])
+    setPriceRange([0, 100000])
+    setBedrooms(0)
+    setBathroms(0)
+    setLocation('All Cities')
+    setSquirefeet([])
+    setyearBuild([0, 2050])
+    setCategories([])
+    setSearchQuery('')
+  }
 
   const filterFunctions = {
     handlelistingStatus,
@@ -120,137 +124,199 @@ export default function ProperteyFiltering() {
     categories,
     setPropertyTypes,
     setSearchQuery,
-  };
+  }
 
-
-
-  // initialize filtered data when listings are loaded
+  // Initialize filters from URL
   useEffect(() => {
-    if (listings.length > 0) {
-      setFilteredData(listings)
-      setSortedFilteredData(listings)
+    const getNum = (k) => {
+      const v = sp.get(k)
+      if (v == null || v === '') return undefined
+      const n = Number(v)
+      return Number.isNaN(n) ? undefined : n
     }
-  }, [listings])
 
+    setSearchQuery(sp.get('q') || '')
+    setLocation(sp.get('location') || 'All Cities')
+
+    const status = sp.get('status')
+    setListingStatus(['Buy','Rent','All'].includes(status) ? status : 'All')
+
+    const type = sp.get('type')
+    setPropertyTypes(type ? type.split(',').map((s) => s.trim()).filter(Boolean) : [])
+
+    const minP = getNum('minPrice')
+    const maxP = getNum('maxPrice')
+    setPriceRange([minP ?? 0, maxP ?? 100000])
+
+    setBedrooms(getNum('beds') ?? 0)
+    setBathroms(getNum('baths') ?? 0)
+
+    const yMin = getNum('yearMin')
+    const yMax = getNum('yearMax')
+    setyearBuild([yMin ?? 0, yMax ?? 2050])
+  }, [sp])
+
+  // Helper: derive Buy/Rent mode if present; otherwise null
+  const deriveMode = (el) => {
+    if (typeof el?.forRent === 'boolean') return el.forRent ? 'Rent' : 'Buy'
+    const direct = el?.listedIn ?? el?.listed ?? el?.rentOrBuy ?? el?.transactionType ?? el?.offerType
+    const purpose = el?.purpose ?? el?.status
+    const test = (v) => {
+      if (!v) return null
+      const s = String(v).toLowerCase()
+      if (/(rent|lease)/.test(s)) return 'Rent'
+      if (/(buy|sale|sell)/.test(s)) return 'Buy'
+      if (s === 'rent' || s === 'buy') return s === 'rent' ? 'Rent' : 'Buy'
+      return null
+    }
+    return test(direct) || test(purpose)
+  }
+
+  // Apply all client filters
   useEffect(() => {
-    if (!sortedFilteredData || !Array.isArray(sortedFilteredData)) return;
-    
-    const newPageItems = sortedFilteredData.slice((pageNumber - 1) * 9, pageNumber * 9);
-    setPageItems(newPageItems)
-    setPageContentTrac([
-      ((pageNumber - 1) * 9) + 1,
-      pageNumber * 9,
-      sortedFilteredData.length
-    ])
-  }, [pageNumber, sortedFilteredData])
+    if (isLoading) return
+    if (!Array.isArray(listings)) return
 
-  useEffect(() => {
-    if (!listings.length) return
+    if (listings.length === 0) {
+      setFilteredData((prev) => (prev.length === 0 ? prev : []))
+      return
+    }
 
-    const refItems = listings.filter((elm) => {
-      if (listingStatus == "All") return true
-      if (listingStatus == "Buy") return !elm.forRent
-      if (listingStatus == "Rent") return elm.forRent
+    const toNum = (v) => (typeof v === 'number' ? v : Number(String(v || '').replace(/\$|,/g, '')))
+
+    const refItems = listings.filter((el) => {
+      if (listingStatus === 'All') return true
+      const mode = deriveMode(el)
+      if (!mode) return true // provision only; don't filter if unknown
+      return listingStatus === mode
     })
 
-    let filteredArrays = []
+    let andFilters = []
 
-    // Apply property type filter
+    // category / type
     if (propertyTypes.length > 0) {
-      filteredArrays.push(refItems.filter(elm => propertyTypes.includes(elm.propertyType)))
+      andFilters.push(refItems.filter(el => propertyTypes.includes(el.propertyType || el.category)))
     }
 
-    // Apply bedroom filter
+    // bedrooms / bathrooms
     if (bedrooms > 0) {
-      filteredArrays.push(refItems.filter(el => el.bed >= bedrooms))
+      andFilters.push(refItems.filter(el => (el.bedrooms ?? el.bed ?? el.rooms ?? 0) >= bedrooms))
     }
-
-    // Apply bathroom filter
     if (bathroms > 0) {
-      filteredArrays.push(refItems.filter(el => el.bath >= bathroms))
+      andFilters.push(refItems.filter(el => (el.bathrooms ?? el.bath ?? 0) >= bathroms))
     }
 
-    // Apply categories filter
+    // amenities / features
     if (categories.length > 0) {
-      filteredArrays.push(refItems.filter(elm => categories.every(c => elm.features.includes(c))))
+      andFilters.push(refItems.filter(el => categories.every(c => (el.amenities || el.features || []).includes(c))))
     }
 
-    // Apply location filter
-    if (location != 'All Cities') {
-      filteredArrays.push(refItems.filter(el => el.city == location))
+    // city/location
+    if (location !== 'All Cities') {
+      andFilters.push(refItems.filter(el => (el.city || '').toString() === location))
     }
 
-    // Apply price range filter
+    // price range
     if (priceRange.length > 0 && (priceRange[0] > 0 || priceRange[1] < 100000)) {
-      filteredArrays.push(refItems.filter(el => {
-        const priceNum = Number(el.price.replace(/\$|,/g, ''))
-        return priceNum >= priceRange[0] && priceNum <= priceRange[1]
+      andFilters.push(
+        refItems.filter(el => {
+          const priceNum = toNum(el.price)
+          return priceNum >= priceRange[0] && priceNum <= priceRange[1]
+        })
+      )
+    }
+
+    // sqft/size
+    if (squirefeet.length > 0 && squirefeet[1] > 0) {
+      andFilters.push(refItems.filter(el => {
+        const size = el.sizeInFt ?? el.sqft ?? 0
+        return size >= squirefeet[0] && size <= squirefeet[1]
       }))
     }
 
-    // Apply square feet filter
-    if (squirefeet.length > 0 && squirefeet[1] > 0) {
-      filteredArrays.push(refItems.filter(el =>
-        el.sqft >= squirefeet[0] && el.sqft <= squirefeet[1]
-      ))
-    }
-
-    // Apply year built filter
+    // year built
     if (yearBuild.length > 0 && (yearBuild[0] > 0 || yearBuild[1] < 2050)) {
-      filteredArrays.push(refItems.filter(el =>
-        el.yearBuilding >= yearBuild[0] && el.yearBuilding <= yearBuild[1]
-      ))
+      andFilters.push(refItems.filter(el => {
+        const y = el.yearBuilt ?? el.yearBuilding ?? 0
+        return y >= yearBuild[0] && y <= yearBuild[1]
+      }))
     }
 
-    // Apply search filter
+    // free-text search across many fields
     if (searchQuery.trim()) {
-      filteredArrays.push(refItems.filter(el => 
-        el.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        el.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        el.address?.toLowerCase().includes(searchQuery.toLowerCase())
-      ))
-    }
-
-    // If no filters are applied, use all items
-    if (filteredArrays.length === 0) {
-      setFilteredData(refItems)
-    } else {
-      // Find common items across all applied filters
-      const commonItems = refItems.filter((item) =>
-        filteredArrays.every((array) => array.includes(item))
+      const q = searchQuery.toLowerCase()
+      andFilters.push(
+        refItems.filter(el =>
+          [
+            el.title,
+            el.name,
+            el.description,
+            el.address,
+            el.city,
+            el.state,
+            el.country,
+            el.propertyId
+          ].some(v => v?.toString().toLowerCase().includes(q))
+        )
       )
-      setFilteredData(commonItems)
     }
-  }, [listings, listingStatus, propertyTypes, priceRange, bedrooms, bathroms, location, squirefeet, yearBuild, categories, searchQuery])
 
-  // 🔹 Update sortedFilteredData when filteredData changes
-  useEffect(() => {
-    if (filteredData && Array.isArray(filteredData) && filteredData.length > 0) {
-      setSortedFilteredData(filteredData)
-    }
-  }, [filteredData])
+    const nextFiltered =
+      andFilters.length === 0
+        ? refItems
+        : refItems.filter(item => andFilters.every(arr => arr.includes(item)))
 
-  // 🔹 Sorting logic
+    setFilteredData((prev) => {
+      const sameLen = prev.length === nextFiltered.length
+      const sameIds = sameLen && prev.every((p, i) => (p._id ?? p.id ?? i) === (nextFiltered[i]?._id ?? nextFiltered[i]?.id ?? i))
+      return sameIds ? prev : nextFiltered
+    })
+  }, [
+    isLoading,
+    listings,
+    listingStatus,
+    propertyTypes,
+    priceRange,
+    bedrooms,
+    bathroms,
+    location,
+    squirefeet,
+    yearBuild,
+    categories,
+    searchQuery
+  ])
+
+  // Sorting
   useEffect(() => {
-    if (!filteredData || !Array.isArray(filteredData)) return;
-    
+    if (!Array.isArray(filteredData)) return
     setPageNumber(1)
-    if (currentSortingOption == 'Newest') {
-      setSortedFilteredData([...filteredData].sort((a, b) => b.yearBuilding - a.yearBuilding))
-    } else if (currentSortingOption == 'Price Low') {
-      setSortedFilteredData([...filteredData].sort((a, b) =>
-        Number(a.price.replace(/\$|,/g, '')) - Number(b.price.replace(/\$|,/g, ''))
-      ))
-    } else if (currentSortingOption == 'Price High') {
-      setSortedFilteredData([...filteredData].sort((a, b) =>
-        Number(b.price.replace(/\$|,/g, '')) - Number(a.price.replace(/\$|,/g, ''))
-      ))
-    } else {
-      setSortedFilteredData(filteredData)
+    const toNum = (v) => (typeof v === 'number' ? v : Number(String(v ?? '').replace(/\$|,/g, '')))
+    let next = filteredData
+    if (currentSortingOption === 'Newest') {
+      next = [...filteredData].sort((a, b) => (b.yearBuilt ?? b.yearBuilding ?? 0) - (a.yearBuilt ?? a.yearBuilding ?? 0))
+    } else if (currentSortingOption === 'Price Low') {
+      next = [...filteredData].sort((a, b) => toNum(a.price) - toNum(b.price))
+    } else if (currentSortingOption === 'Price High') {
+      next = [...filteredData].sort((a, b) => toNum(b.price) - toNum(a.price))
     }
+    setSortedFilteredData(next)
   }, [filteredData, currentSortingOption])
 
-  if (isLoading) return <Spinner />;
+  // Pagination
+  useEffect(() => {
+    if (!Array.isArray(sortedFilteredData)) return
+    const start = (pageNumber - 1) * 9
+    const end = pageNumber * 9
+    const total = sortedFilteredData.length
+    setPageItems(sortedFilteredData.slice(start, end))
+    setPageContentTrac([
+      total === 0 ? 0 : start + 1,
+      Math.min(end, total),
+      total,
+    ])
+  }, [pageNumber, sortedFilteredData])
+
+  if (isLoading) return <Spinner />
   if (error) return <div className="text-center py-5">Error loading properties: {error.message}</div>
 
   return (
@@ -286,6 +352,9 @@ export default function ProperteyFiltering() {
 
         <div className="row">
           <FeaturedListings colstyle={colstyle} data={pageItems || []} />
+          {sortedFilteredData.length === 0 && (
+            <div className="text-center py-5">No properties match your search.</div>
+          )}
         </div>
 
         <div className="row">

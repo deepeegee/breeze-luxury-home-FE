@@ -13,7 +13,7 @@ import Link from "next/link";
 import Wrapper from "./layout-wrapper/wrapper";
 
 export const metadata = {
-  title: "Breeze Luxury Homes - Real Estate NextJS Template",
+  title: " Breeze Luxury Homes",
 };
 
 const HomePage = () => {

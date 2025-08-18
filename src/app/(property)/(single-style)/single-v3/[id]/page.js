@@ -4,30 +4,31 @@ import DefaultHeader from "@/components/common/DefaultHeader";
 import Footer from "@/components/common/default-footer";
 import MobileMenu from "@/components/common/mobile-menu";
 
-import EnergyClass from "@/components/property/property-single-style/common/EnergyClass";
+// import EnergyClass from "@/components/property/property-single-style/common/EnergyClass";
 import FloorPlans from "@/components/property/property-single-style/common/FloorPlans";
-import HomeValueChart from "@/components/property/property-single-style/common/HomeValueChart";
-import InfoWithForm from "@/components/property/property-single-style/common/more-info";
-import NearbySimilarProperty from "@/components/property/property-single-style/common/NearbySimilarProperty";
+// import HomeValueChart from "@/components/property/property-single-style/common/HomeValueChart";
+// import InfoWithForm from "@/components/property/property-single-style/common/more-info";
+// import NearbySimilarProperty from "@/components/property/property-single-style/common/NearbySimilarProperty";
 import OverView from "@/components/property/property-single-style/common/OverView";
-import PropertyAddress from "@/components/property/property-single-style/common/PropertyAddress";
+// import PropertyAddress from "@/components/property/property-single-style/common/PropertyAddress";
 import PropertyDetails from "@/components/property/property-single-style/common/PropertyDetails";
 import PropertyFeaturesAminites from "@/components/property/property-single-style/common/PropertyFeaturesAminites";
 import PropertyHeader from "@/components/property/property-single-style/common/PropertyHeader";
 import PropertyNearby from "@/components/property/property-single-style/common/PropertyNearby";
 import PropertyVideo from "@/components/property/property-single-style/common/PropertyVideo";
-import PropertyViews from "@/components/property/property-single-style/common/property-view";
+// import PropertyViews from "@/components/property/property-single-style/common/property-view";
 import ProperytyDescriptions from "@/components/property/property-single-style/common/ProperytyDescriptions";
-import ReviewBoxForm from "@/components/property/property-single-style/common/ReviewBoxForm";
+// import ReviewBoxForm from "@/components/property/property-single-style/common/ReviewBoxForm";
 import VirtualTour360 from "@/components/property/property-single-style/common/VirtualTour360";
-import AllReviews from "@/components/property/property-single-style/common/reviews";
-import ContactWithAgent from "@/components/property/property-single-style/sidebar/ContactWithAgent";
+// import AllReviews from "@/components/property/property-single-style/common/reviews";
+// import ContactWithAgent from "@/components/property/property-single-style/sidebar/ContactWithAgent";
 import ScheduleTour from "@/components/property/property-single-style/sidebar/ScheduleTour";
 import PropertyGallery from "@/components/property/property-single-style/single-v3/PropertyGallery";
-import MortgageCalculator from "@/components/property/property-single-style/common/MortgageCalculator";
+// import MortgageCalculator from "@/components/property/property-single-style/common/MortgageCalculator";
 import WalkScore from "@/components/property/property-single-style/common/WalkScore";
 import FloatingWhatsAppButton from "@/components/property/property-single-style/common/FloatingWhatsAppButton";
 import Spinner from "@/components/common/Spinner";
+import FeatureProperties from "@/components/home/home-v6/FeatureProperties";
 
 import React, { useMemo, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -136,7 +137,7 @@ const SingleV3 = () => {
 
               <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
                 <h4 className="title fz17 mb30">Property Description</h4>
-                <ProperytyDescriptions />
+                <ProperytyDescriptions description={property?.description}/>
 
                 <h4 className="title fz17 mb30 mt50">Property Details</h4>
                 <div className="row">
@@ -144,12 +145,12 @@ const SingleV3 = () => {
                 </div>
               </div>
 
-              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
+              {/* <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
                 <h4 className="title fz17 mb30 mt30">Address</h4>
                 <div className="row">
                   <PropertyAddress property={property} />
                 </div>
-              </div>
+              </div> */}
 
               <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
                 <h4 className="title fz17 mb30">Features &amp; Amenities</h4>
@@ -190,12 +191,12 @@ const SingleV3 = () => {
                 </div>
               </div>
 
-              {/* <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
+              <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
                 <h4 className="title fz17 mb30">What&apos;s Nearby?</h4>
                 <div className="row">
                   <PropertyNearby />
                 </div>
-              </div> */}
+              </div>
 
               <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
                 <h4 className="title fz17 mb30">Walkscore</h4>
@@ -271,31 +272,17 @@ const SingleV3 = () => {
           <div className="row mt30 align-items-center justify-content-between">
             <div className="col-auto">
               <div className="main-title">
-                <h2 className="title">Discover Our Featured Listings</h2>
+              <h2>Featured Properties</h2>
                 <p className="paragraph">
                   Aliquam lacinia diam quis lacus euismod
                 </p>
               </div>
             </div>
-
+            <div className="home6-listing-single-slider" data-aos="fade-up">
+              <FeatureProperties />
+            </div>
             <div className="col-auto mb30">
-              <div className="row align-items-center justify-content-center">
-                <div className="col-auto">
-                  <button className="featured-prev__active swiper_button">
-                    <i className="far fa-arrow-left-long" />
-                  </button>
-                </div>
-
-                <div className="col-auto">
-                  <div className="pagination swiper--pagination featured-pagination__active" />
-                </div>
-
-                <div className="col-auto">
-                  <button className="featured-next__active swiper_button">
-                    <i className="far fa-arrow-right-long" />
-                  </button>
-                </div>
-              </div>
+ 
             </div>
           </div>
           {/* End .row */}

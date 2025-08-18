@@ -1,41 +1,35 @@
-const Amenities = () => {
-  const amenities = [
-    [
-      { label: "Attic" },
-      { label: "Basketball court", defaultChecked: true },
-      { label: "Air Conditioning", defaultChecked: true },
-      { label: "Lawn", defaultChecked: true },
-    ],
-    [
-      { label: "TV Cable" },
-      { label: "Dryer" },
-      { label: "Outdoor Shower" },
-      { label: "Washer" },
-    ],
-    [
-      { label: "Lake view" },
-      { label: "Wine cellar" },
-      { label: "Front yard" },
-      { label: "Refrigerator" },
-    ],
-  ];
+"use client";
+import { AMENITY_GROUPS } from "@/constants/propertyOptions";
 
+const Amenities = () => {
   return (
     <>
-      {amenities.map((column, columnIndex) => (
-        <div className="col-sm-4" key={columnIndex}>
+      {AMENITY_GROUPS.map((group) => (
+        <div className="col-md-12" key={group.label}>
           <div className="widget-wrapper mb20">
+            <h6 className="list-title">{group.label}</h6>
             <div className="checkbox-style1">
-              {column.map((amenity, amenityIndex) => (
-                <label className="custom_checkbox" key={amenityIndex}>
-                  {amenity.label}
-                  <input
-                    type="checkbox"
-                    defaultChecked={amenity.defaultChecked}
-                  />
-                  <span className="checkmark" />
-                </label>
-              ))}
+              <div className="row">
+                {group.items.map((label) => {
+                  const id = `amenity-${group.label}-${label}`.replace(/\s+/g, "_");
+                  return (
+                    <div className="col-sm-6 col-lg-4" key={id}>
+                      <div className="form-check d-flex align-items-center mb10">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id={id}
+                          name="amenity"
+                          value={label}
+                        />
+                        <label className="form-check-label ms10" htmlFor={id}>
+                          {label}
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

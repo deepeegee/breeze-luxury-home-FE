@@ -56,7 +56,7 @@ const NotFound = () => {
                   go to.
                 </p>
                 <Link href="/" className="ud-btn btn-dark">
-                  Go Back To Homepages
+                  Go Back To Homepage
                   <i className="fal fa-arrow-right-long" />
                 </Link>
               </div>

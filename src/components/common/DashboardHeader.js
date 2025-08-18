@@ -24,7 +24,6 @@ const DashboardHeader = () => {
         { icon: "flaticon-home", text: "My Properties", href: "/dashboard-my-properties" },
         { icon: "flaticon-like", text: "My Favorites", href: "/dashboard-my-favourites" },
         { icon: "flaticon-search-2", text: "Saved Search", href: "/dashboard-saved-search" },
-        { icon: "flaticon-review", text: "Reviews", href: "/dashboard-review" },
       ],
     },
     {

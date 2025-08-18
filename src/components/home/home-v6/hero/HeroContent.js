@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 const HeroContent = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("buy");
+  const [keyword, setKeyword] = useState("");
 
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -15,6 +16,18 @@ const HeroContent = () => {
     { id: "rent", label: "Rent" },
   ];
 
+  const goToResults = () => {
+    const qs = new URLSearchParams();
+    if (keyword.trim()) qs.set("q", keyword.trim());
+    qs.set("status", activeTab === "rent" ? "Rent" : "Buy");
+    router.push(`/grid-full-3-col?${qs.toString()}`);
+  };
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    goToResults();
+  };
+
   return (
     <div className="advance-search-tab mt60 mt30-md mb25 animate-up-3">
       <ul className="nav nav-tabs p-0 m-0">
@@ -23,6 +36,7 @@ const HeroContent = () => {
             <button
               className={`nav-link ${activeTab === tab.id ? "active" : ""}`}
               onClick={() => handleTabClick(tab.id)}
+              type="button"
             >
               {tab.label}
             </button>
@@ -40,7 +54,7 @@ const HeroContent = () => {
               <div className="row">
                 <div className="col-md-8 col-lg-9">
                   <div className="advance-search-field position-relative text-start">
-                    <form className="form-search position-relative">
+                    <form className="form-search position-relative" onSubmit={onSubmit}>
                       <div className="box-search">
                         <span className="icon flaticon-home-1" />
                         <input
@@ -48,6 +62,9 @@ const HeroContent = () => {
                           type="text"
                           name="search"
                           placeholder={`Enter an address, neighborhood, city, or ZIP code for ${tab.label}`}
+                          value={keyword}
+                          onChange={(e) => setKeyword(e.target.value)}
+                          autoComplete="off"
                         />
                       </div>
                     </form>
@@ -68,7 +85,8 @@ const HeroContent = () => {
                     <button
                       className="advance-search-icon ud-btn btn-thm ms-4"
                       type="button"
-                      onClick={() => router.push("/grid-full-2-col")}
+                      onClick={goToResults}
+                      aria-label="Search"
                     >
                       <span className="flaticon-search" />
                     </button>
