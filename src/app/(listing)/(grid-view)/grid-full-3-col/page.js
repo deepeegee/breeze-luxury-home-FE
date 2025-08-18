@@ -1,15 +1,17 @@
+import { Suspense } from "react";
 import DefaultHeader from "@/components/common/DefaultHeader";
-
 import Footer from "@/components/common/default-footer";
 import MobileMenu from "@/components/common/mobile-menu";
-
+import Spinner from "@/components/common/Spinner";
 import ProperteyFiltering from "@/components/listing/grid-view/grid-full-3-col/ProperteyFiltering";
-
 import React from "react";
 
 export const metadata = {
   title: "Property Listings",
 };
+
+// This page depends on URL search params; avoid static prerender.
+export const dynamic = "force-dynamic";
 
 const GridFull3Col = () => {
   return (
@@ -29,10 +31,6 @@ const GridFull3Col = () => {
             <div className="col-lg-12">
               <div className="breadcumb-style1">
                 <h2 className="title">Listed Properties</h2>
-                {/* <div className="breadcumb-list">
-                  <a href="#">Home</a>
-                  <a href="#">For Rent</a>
-                </div> */}
                 <a
                   className="filter-btn-left mobile-filter-btn d-block d-lg-none"
                   data-bs-toggle="offcanvas"
@@ -50,7 +48,17 @@ const GridFull3Col = () => {
       {/* End Breadcumb Sections */}
 
       {/* Property Filtering */}
-      <ProperteyFiltering/>
+      <Suspense
+        fallback={
+          <section className="pt60 pb90 bgc-f7">
+            <div className="container">
+              <Spinner />
+            </div>
+          </section>
+        }
+      >
+        <ProperteyFiltering />
+      </Suspense>
       {/* Property Filtering */}
 
       {/* Start Our Footer */}
