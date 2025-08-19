@@ -20,16 +20,20 @@ const getStatusStyle = (status) => {
 };
 
 const featuredImage = (photos) => {
-  if (!Array.isArray(photos) || photos.length === 0) return "/images/listings/list-1.jpg";
-  const f = photos.find((p) => p?.isFeatured);
-  return (f?.url || photos[0]?.url || "/images/listings/list-1.jpg");
+  if (!Array.isArray(photos) || photos.length === 0)
+    return "/images/listings/list-1.jpg";
+  const f = photos.find((p) => p && p.isFeatured);
+  return (f && f.url) || (photos[0] && photos[0].url) || "/images/listings/list-1.jpg";
 };
 
 const fmtPrice = (n) => {
   if (typeof n !== "number") return "—";
   try {
-    // feel free to swap 'NGN'/'USD'
-    return n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+    return n.toLocaleString(undefined, {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    });
   } catch {
     return `$${Number(n).toLocaleString()}`;
   }
@@ -50,13 +54,34 @@ const fmtDate = (d) => {
 
 const normalize = (s) => (s ?? "").toString().toLowerCase();
 
+// If true, use <img> to avoid next/image domain restriction
+const isExternalUrl = (src) => /^https?:\/\//i.test(src);
+
+function SafeThumb({ src, alt, width = 110, height = 94, className = "w-100" }) {
+  if (isExternalUrl(src)) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return (
+      <img
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
+        className={className}
+        referrerPolicy="no-referrer"
+        loading="lazy"
+      />
+    );
+  }
+  return <Image src={src} alt={alt} width={width} height={height} className={className} />;
+}
+
 const PropertyDataTable = ({ search = "", sort = "Best Match" }) => {
-  const [raw, setRaw] = useState([]);        // BE: PropertyBE[]
+  const [raw, setRaw] = useState([]); // backend properties (keep as-is)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { trigger: deleteListing } = useDeleteListing();
 
-  // Fetch from BE (raw to keep status/createdAt/amenities/etc)
+  // fetch from backend
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -76,9 +101,12 @@ const PropertyDataTable = ({ search = "", sort = "Best Match" }) => {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, []);
 
+  // text filter
   const filtered = useMemo(() => {
     const q = normalize(search);
     if (!q) return raw;
@@ -92,8 +120,8 @@ const PropertyDataTable = ({ search = "", sort = "Best Match" }) => {
         p?.state,
         p?.country,
         p?.category,
-        p?.status,     // Pending/Processing/Published
-        p?.listedIn,   // Active etc.
+        p?.status,
+        p?.listedIn,
       ]
         .filter(Boolean)
         .map(normalize)
@@ -103,6 +131,7 @@ const PropertyDataTable = ({ search = "", sort = "Best Match" }) => {
     });
   }, [raw, search]);
 
+  // sorting
   const sorted = useMemo(() => {
     const arr = [...filtered];
 
@@ -113,9 +142,8 @@ const PropertyDataTable = ({ search = "", sort = "Best Match" }) => {
 
     if (sort === "Price Low") return arr.sort(byPriceAsc);
     if (sort === "Price High") return arr.sort(byPriceDesc);
-    if (sort === "Best Seller") return arr.sort(byNewest); // interpret as “newest”
+    if (sort === "Best Seller") return arr.sort(byNewest);
 
-    // Best Match: prioritize title/address match when a query exists; else newest
     if (search.trim()) {
       const q = normalize(search);
       return arr.sort((a, b) => {
@@ -136,23 +164,14 @@ const PropertyDataTable = ({ search = "", sort = "Best Match" }) => {
     if (!confirm("Delete this property?")) return;
     try {
       await deleteListing(id);
-      // remove locally
       setRaw((prev) => prev.filter((p) => p?.id !== id && p?._id !== id));
     } catch (e) {
       alert(e?.message || "Failed to delete");
     }
   };
 
-  if (loading) {
-    return (
-      <div className="text-center py-5">Loading properties…</div>
-    );
-  }
-  if (error) {
-    return (
-      <div className="text-center text-danger py-5">Failed to load: {error}</div>
-    );
-  }
+  if (loading) return <div className="text-center py-5">Loading properties…</div>;
+  if (error) return <div className="text-center text-danger py-5">Failed to load: {error}</div>;
 
   return (
     <table className="table-style3 table at-savesearch">
@@ -180,13 +199,7 @@ const PropertyDataTable = ({ search = "", sort = "Best Match" }) => {
               <th scope="row">
                 <div className="listing-style1 dashboard-style d-xxl-flex align-items-center mb-0">
                   <div className="list-thumb">
-                    <Image
-                      width={110}
-                      height={94}
-                      className="w-100"
-                      src={img}
-                      alt={p?.title || "property"}
-                    />
+                    <SafeThumb src={img} alt={p?.title || "property"} width={110} height={94} />
                   </div>
                   <div className="list-content py-0 p-0 mt-2 mt-xxl-0 ps-xxl-4">
                     <div className="h6 list-title">
@@ -206,7 +219,6 @@ const PropertyDataTable = ({ search = "", sort = "Best Match" }) => {
                 <span className={getStatusStyle(status)}>{status}</span>
               </td>
 
-              {/* “View” column — link to the details page */}
               <td className="vam">
                 <Link className="ud-btn btn-light" href={`/single-v3/${id}`}>
                   View

@@ -159,7 +159,7 @@ const FeaturedListings = ({ data = [], colstyle }) => {
 
                 {!id && (
                   <small className="text-danger d-block mt-2">
-                    ⚠️ Cannot open details: listing is missing an id/slug.
+                    Cannot open details: listing is missing an id/slug.
                   </small>
                 )}
               </div>

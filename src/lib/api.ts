@@ -43,10 +43,9 @@ export type Testimonial = {
 };
 
 // ------- BE shapes -------
-type PhotoBE = { url: string; isFeatured?: boolean };
+type PhotoBE = { url: string; isFeatured?: boolean }; // BE ignores isFeatured on photo; we strip it when sending
 
 export type PropertyBE = {
-  // Accept either id or _id from backend
   id?: number | string;
   _id?: string;
   propertyId?: string;
@@ -55,8 +54,8 @@ export type PropertyBE = {
   description?: string;
   name?: string;
   category?: string;
-  listedIn?: string; // e.g., "Active", "Rent", "Buy", etc (backend-defined)
-  status?: string;   // e.g., "Pending", "Published"
+  listedIn?: string;
+  status?: string;
   price?: number;
   photos?: PhotoBE[];
 
@@ -78,6 +77,9 @@ export type PropertyBE = {
 
   lat?: number;
   long?: number;
+
+  // some APIs return this at the property level
+  isFeatured?: boolean;
 };
 
 // ------- base -------
@@ -90,14 +92,12 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-
-  // Merge with any additional headers from init
   Object.assign(headers, (init.headers as Record<string, string>) || {});
 
   console.log(`API Request to: ${url}`, { headers, method: init.method || "GET" });
 
   const res = await fetch(url, {
-    credentials: "include", // include HTTP-only Auth cookie
+    credentials: "include",
     headers,
     ...init,
   });
@@ -118,7 +118,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
       try {
         const textResponse = await res.text();
         msg = `HTTP ${res.status}: ${textResponse || res.statusText}`;
-      } catch (textErr) {
+      } catch {
         msg = `HTTP ${res.status}: ${res.statusText}`;
       }
     }
@@ -126,7 +126,6 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new Error(msg);
   }
 
-  // Some endpoints may return no content
   const contentLength = res.headers.get("content-length");
   if (contentLength === "0") {
     console.log("Empty response body, returning empty object");
@@ -154,14 +153,13 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 async function apiFetchForm<T>(path: string, form: FormData): Promise<T> {
   const url = `${API_BASE}${path}`;
-
   const headers: Record<string, string> = {};
 
   const res = await fetch(url, {
     method: "POST",
     credentials: "include",
     headers,
-    body: form, // let browser set boundary
+    body: form,
   });
 
   if (!res.ok) {
@@ -176,7 +174,7 @@ async function apiFetchForm<T>(path: string, form: FormData): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-// ------- query sanitizer -------
+// ------- query -------
 function toQueryString(params?: Record<string, any>): string {
   if (!params) return "";
   const qs = new URLSearchParams();
@@ -190,9 +188,34 @@ function toQueryString(params?: Record<string, any>): string {
   return out ? `?${out}` : "";
 }
 
+// ------- photo sanitization (fixes 400) -------
+function normalizePhotos(input?: PhotoBE[]): { url: string }[] | undefined {
+  if (!Array.isArray(input)) return undefined;
+
+  // keep only items with a valid url
+  const items = input
+    .filter((p) => p && typeof p.url === "string" && p.url.trim() !== "")
+    .map((p) => ({ ...p })); // shallow copy
+
+  if (items.length === 0) return [];
+
+  // if any photo was marked isFeatured=true on the client, move it to the front
+  const featuredIdx = items.findIndex((p: any) => p.isFeatured === true);
+  if (featuredIdx > 0) {
+    const [feat] = items.splice(featuredIdx, 1);
+    items.unshift(feat);
+  }
+
+  // strip isFeatured from each photo before sending to BE
+  const stripped = items.map(({ url }) => ({ url }));
+  return stripped;
+}
+
 // ------- mapper -------
 function toListing(p: PropertyBE): Listing {
-  const featuredPhoto = p.photos?.find((ph) => ph.isFeatured) ?? p.photos?.[0];
+  const featuredPhoto =
+    p.photos?.find((ph) => ph.isFeatured) ?? p.photos?.[0];
+
   const id = (p as any)._id ?? p.id ?? p.propertyId ?? "";
 
   const toNum = (v: any) =>
@@ -204,8 +227,8 @@ function toListing(p: PropertyBE): Listing {
     title: p.title || p.name || "Property",
     city: p.city,
     location: [p.address, p.city, p.state, p.country].filter(Boolean).join(", "),
-    bed: p.bedrooms,
-    bath: p.bathrooms,
+    bed: (p as any).bed ?? p.bedrooms,
+    bath: (p as any).bath ?? p.bathrooms,
     sqft: p.sizeInFt,
     price: toNum(p.price),
     description: p.description || undefined,
@@ -213,7 +236,11 @@ function toListing(p: PropertyBE): Listing {
     tags: p.amenities,
     propertyType: p.category,
     yearBuilding: p.yearBuilt,
-    featured: !!featuredPhoto?.isFeatured,
+    // prefer property-level isFeatured; else per-photo flag (older FE) ; else false
+    featured:
+      typeof p.isFeatured === "boolean"
+        ? p.isFeatured
+        : !!(p.photos && p.photos.some((ph) => ph.isFeatured)),
     lat: p.lat,
     long: p.long,
     features: p.amenities,
@@ -226,12 +253,10 @@ function toListing(p: PropertyBE): Listing {
    AUTH / ADMINS
 ================ */
 export function login(email: string, password: string) {
-  // POST /auth/login
   return apiFetch<{ token?: string; user?: any }>(`/auth/login`, {
     method: "POST",
     body: JSON.stringify({ email, password }),
   }).then((response) => {
-    // Some backends return 201 with empty body and set token as http-only cookie
     if (response && Object.keys(response).length === 0) {
       return { success: true, token: "http-only-cookie" } as any;
     }
@@ -240,7 +265,6 @@ export function login(email: string, password: string) {
 }
 
 export function registerAdmin(data: { name: string; email: string; password: string }) {
-  // POST /admins/register
   return apiFetch<{ id: string | number; name: string; email: string }>(`/admins/register`, {
     method: "POST",
     body: JSON.stringify(data),
@@ -248,7 +272,6 @@ export function registerAdmin(data: { name: string; email: string; password: str
 }
 
 export function getAdminMe() {
-  // GET /admins/me
   return apiFetch<{ id: string | number; name: string; email: string }>(`/admins/me`);
 }
 
@@ -265,22 +288,26 @@ export function getListing(id: string | number) {
 }
 
 export function createListing(payload: PropertyBE) {
-  // POST /properties/create
+  // sanitize photos for BE (strip isFeatured and move featured to front)
+  const photos = normalizePhotos(payload.photos);
+
   return apiFetch<PropertyBE>(`/properties/create`, {
     method: "POST",
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ ...payload, photos }),
   }).then((res) => {
-    // If backend returns empty body, fall back to submitted payload
-    const body: PropertyBE = res && Object.keys(res).length ? res : payload;
+    const body: PropertyBE = res && Object.keys(res).length ? res : { ...payload, photos };
     return toListing(body);
   });
 }
 
 export function updateListing(id: string | number, data: Partial<PropertyBE>) {
-  // PATCH /properties/:id
+  const next: Partial<PropertyBE> = { ...data };
+  if (data.photos) {
+    next.photos = normalizePhotos(data.photos) as any;
+  }
   return apiFetch<PropertyBE>(`/properties/${id}`, {
     method: "PATCH",
-    body: JSON.stringify(data),
+    body: JSON.stringify(next),
   }).then(toListing);
 }
 
@@ -289,27 +316,31 @@ export function deleteListing(id: string | number) {
 }
 
 export function uploadListingPhoto(file: File) {
-  // POST /properties/photo (multipart, field 'file')
+  // BE expects one of: file | image | photo | upload | picture
   const form = new FormData();
   form.append("file", file);
-  return apiFetchForm<{ url: string }>(`/properties/photo`, form);
+  return apiFetchForm<{ url?: string; logo?: string }>(`/properties/photo`, form).then((res: any) => {
+    // Normalize to { url }
+    const url =
+      res?.url ||
+      res?.logo ||
+      res?.data?.url ||
+      res?.data?.logo ||
+      res?.Location ||
+      res?.location ||
+      res?.fileUrl ||
+      res?.secure_url ||
+      null;
+
+    if (!url) throw new Error("No URL returned");
+    return { url } as { url: string };
+  });
 }
 
 /* ================
    BLOGS / TESTIMONIALS (stubs)
 ================ */
-export const getBlogs = (params?: Record<string, any>) =>
-  // Endpoint not implemented yet
-  Promise.resolve([] as any[]);
-
-export const getBlog = (id: string | number) =>
-  // Endpoint not implemented yet
-  Promise.resolve(null);
-
-export const getTestimonials = () =>
-  // Endpoint not implemented yet
-  Promise.resolve([] as any[]);
-
-export const getCities = () =>
-  // Endpoint not implemented yet
-  Promise.resolve([] as any[]);
+export const getBlogs = (params?: Record<string, any>) => Promise.resolve([] as any[]);
+export const getBlog = (id: string | number) => Promise.resolve(null);
+export const getTestimonials = () => Promise.resolve([] as any[]);
+export const getCities = () => Promise.resolve([] as any[]);
