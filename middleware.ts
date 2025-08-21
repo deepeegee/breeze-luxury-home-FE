@@ -1,4 +1,3 @@
-// middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -7,7 +6,6 @@ const AUTH_COOKIE_NAMES = [
   "auth_token",
   "session_token",
   "token",
-  // add common variants in case your backend uses them:
   "access_token",
   "accessToken",
   "jwt",

@@ -1,32 +1,24 @@
 "use client";
 import React from "react";
-import { useListings } from "@/lib/useApi";
+import { useListings, useTotalPropertyViews } from "@/lib/useApi";
 
 const TopStateBlock = () => {
-  const { data: properties, isLoading } = useListings();
+  const { data: properties, isLoading: loadingProps } = useListings();
+  const { total, isLoading: loadingViews } = useTotalPropertyViews();
 
   const statisticsData = [
     {
       text: "All Properties",
-      title: isLoading ? "..." : properties?.length?.toString() || "0",
+      title: loadingProps ? "…" : String(properties?.length ?? 0),
       icon: "flaticon-home",
     },
     {
       text: "Total Views",
-      title: "192",
+      title: loadingViews ? "…" : String(total),
       icon: "flaticon-search-chart",
     },
-    {
-      text: "Total Visitor Reviews",
-      title: "438",
-      icon: "flaticon-review",
-    },
-    {
-      text: "Total Favorites",
-      title: "67",
-      icon: "flaticon-like",
-    },
   ];
+
   return (
     <>
       {statisticsData.map((data, index) => (

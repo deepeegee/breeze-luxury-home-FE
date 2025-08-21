@@ -15,13 +15,18 @@ const PropertyDescription = () => {
     { value: "Published", label: "Published" },
   ];
 
-  // Local state to mirror react-select into hidden inputs
+  // Local state to mirror react-select + featured into hidden inputs
   const [category, setCategory] = useState("");
   const [listedIn, setListedIn] = useState("");
   const [status, setStatus] = useState("");
 
+  // NEW: isFeatured toggle (default false)
+  const [isFeatured, setIsFeatured] = useState(false);
+
   const [showSelect, setShowSelect] = useState(false);
-  useEffect(() => { setShowSelect(true); }, []);
+  useEffect(() => {
+    setShowSelect(true);
+  }, []);
 
   const customStyles = {
     option: (styles, { isFocused, isSelected, isHovered }) => ({
@@ -36,10 +41,12 @@ const PropertyDescription = () => {
 
   return (
     <div className="form-style1">
-      {/* Hidden inputs so the parent <form> can capture react-select values */}
+      {/* Hidden inputs so the parent <form> can capture react-select & featured values */}
       <input type="hidden" name="category" value={category} />
       <input type="hidden" name="listedIn" value={listedIn} />
       <input type="hidden" name="status" value={status} />
+      {/* NEW: featured flag mirrored to a hidden input as 'true' | 'false' */}
+      <input type="hidden" name="isFeatured" value={String(isFeatured)} />
 
       <div className="row">
         {/* Marketing / display name (optional) */}
@@ -170,6 +177,27 @@ const PropertyDescription = () => {
                 />
               )}
             </div>
+          </div>
+        </div>
+
+        {/* NEW: Is Featured toggle */}
+        <div className="col-sm-12">
+          <div className="mb20 d-flex align-items-center gap-3">
+            <div className="form-check form-switch">
+              <input
+                id="isFeaturedToggle"
+                type="checkbox"
+                className="form-check-input"
+                checked={isFeatured}
+                onChange={(e) => setIsFeatured(e.target.checked)}
+              />
+              <label className="form-check-label ms-2" htmlFor="isFeaturedToggle">
+                Mark as Featured
+              </label>
+            </div>
+            <span className="text-muted fz14">
+              Featured properties can be highlighted on the homepage or “Featured” sections.
+            </span>
           </div>
         </div>
 

@@ -19,13 +19,10 @@ const MultiSelectField = () => {
 
   useEffect(() => setShowSelect(true), []);
 
-  const floorOptions = useMemo(() => {
-    // 1–20 floors (tweak as needed)
-    return Array.from({ length: 20 }, (_, i) => {
-      const n = i + 1;
-      return { value: String(n), label: `${n}` };
-    });
-  }, []);
+  const floorOptions = useMemo(
+    () => Array.from({ length: 20 }, (_, i) => ({ value: String(i + 1), label: `${i + 1}` })),
+    []
+  );
 
   return (
     <>

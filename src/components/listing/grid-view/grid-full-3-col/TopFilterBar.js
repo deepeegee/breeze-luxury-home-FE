@@ -1,179 +1,269 @@
-'use client'
+"use client";
 
-import React from "react";
+import React, { useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ListingStatus from "../../sidebar/ListingStatus";
 import PropertyType from "../../sidebar/PropertyType";
 import PriceRange from "../../sidebar/PriceRange";
 import Bedroom from "../../sidebar/Bedroom";
 import Bathroom from "../../sidebar/Bathroom";
 
-const TopFilterBar = ({filterFunctions,setCurrentSortingOption,colstyle,setColstyle}) => {
-  
+/* ---------- canonical type mapping ---------- */
+const TYPE_MAP = new Map([
+  ["fully-detached duplex", "Fully-Detached Duplex"],
+  ["duplex", "Fully-Detached Duplex"],
+  ["bungalow", "Bungalow"],
+  ["apartment", "Apartment"],
+  ["apartments", "Apartment"],
+  ["townhome", "Townhome"],
+  ["town home", "Townhome"],
+  ["office", "Office"],
+  ["offices", "Office"],
+  ["factory", "Factory"],
+  ["land & plots", "Land & Plots"],
+  ["land and plots", "Land & Plots"],
+  ["land", "Land & Plots"],
+]);
+
+const canonType = (s) => {
+  const k = (s ?? "").toString().trim().toLowerCase();
+  return TYPE_MAP.get(k) ?? s;
+};
+
+export default function TopFilterBar({ setCurrentSortingOption, colstyle, setColstyle }) {
+  const router = useRouter();
+  const sp = useSearchParams();
+
+  const updateQuery = (patch) => {
+    const next = new URLSearchParams(sp?.toString() || "");
+    Object.entries(patch).forEach(([k, v]) => {
+      if (
+        v === undefined ||
+        v === null ||
+        v === "" ||
+        (Array.isArray(v) && v.length === 0)
+      ) {
+        next.delete(k);
+      } else {
+        next.set(k, Array.isArray(v) ? v.join(",") : String(v));
+      }
+    });
+    router.push(`?${next.toString()}`, { scroll: false });
+  };
+
+  /* ---------- handlers for child widgets (apply immediately) ---------- */
+  const filterFunctions = useMemo(
+    () => ({
+      setStatus: (label) => {
+        const val = (label || "").toString().toLowerCase();
+        // Store in query as: "for-sale" | "sold"
+        const qVal = val.includes("sold")
+          ? "sold"
+          : val.includes("sale") || val.includes("avail")
+          ? "for-sale"
+          : "";
+        updateQuery({ status: qVal });
+      },
+      setPropertyTypes: (types = []) => {
+        const norm = (Array.isArray(types) ? types : [types])
+          .map(canonType)
+          .filter(Boolean);
+        updateQuery({ type: norm });
+      },
+      setPriceRange: ([min, max] = []) =>
+        updateQuery({
+          minPrice: min ?? "",
+          maxPrice: max ?? "",
+        }),
+      setBeds: (n) => updateQuery({ beds: n ?? "" }),
+      setBaths: (n) => updateQuery({ baths: n ?? "" }),
+      setQuery: (q) => updateQuery({ q }),
+      clearAll: () => router.push("?", { scroll: false }),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sp]
+  );
+
+  const onSortChange = (val) => {
+    setCurrentSortingOption?.(val);
+    updateQuery({ sort: val });
+  };
+
+  /* ---------- derive compact trigger labels ---------- */
+  const statusQ = sp.get("status"); // "for-sale" | "sold" | null
+  const statusLabel =
+    statusQ === "sold" ? "Sold" : statusQ === "for-sale" ? "For sale" : "Status";
+
+  const typeQ = sp.get("type"); // "A,B,C" or null
+  const typeArr = typeQ ? typeQ.split(",") : [];
+  const typeLabel =
+    typeArr.length === 0
+      ? "Property Type"
+      : typeArr.length === 1
+      ? canonType(typeArr[0])
+      : `Property Type (${typeArr.length})`;
+
+  const minPrice = sp.get("minPrice");
+  const maxPrice = sp.get("maxPrice");
+  const priceLabel =
+    minPrice || maxPrice
+      ? `Price ${minPrice ? `$${Number(minPrice).toLocaleString()}` : "Any"} – ${
+          maxPrice ? `$${Number(maxPrice).toLocaleString()}` : "Any"
+        }`
+      : "Price";
+
+  const beds = sp.get("beds");
+  const baths = sp.get("baths");
+  const bbLabel =
+    beds || baths ? `Beds/Baths ${beds ?? "Any"}/${baths ?? "Any"}` : "Beds / Baths";
+
+  const sortDefault = sp.get("sort") || "Best Match";
+
   return (
     <>
+      {/* LEFT: filters */}
       <div className="col-xl-9 d-none d-lg-block">
         <div className="dropdown-lists">
           <ul className="p-0 text-center text-xl-start">
+            {/* STATUS */}
             <li className="list-inline-item position-relative">
               <button
                 type="button"
                 className="open-btn mb15 dropdown-toggle"
                 data-bs-toggle="dropdown"
-                data-bs-auto-close="outside"
               >
-                For Sale <i className="fa fa-angle-down ms-2" />
+                {statusLabel} <i className="fa fa-angle-down ms-2" />
               </button>
               <div className="dropdown-menu">
-                <div className="widget-wrapper bdrb1 pb25 mb0 pl20">
-                  <h6 className="list-title">Listing Status</h6>
+                <div className="widget-wrapper pb15 mb0 px20">
+                  <h6 className="list-title mb10">Listing Status</h6>
                   <div className="radio-element">
                     <ListingStatus filterFunctions={filterFunctions} />
                   </div>
                 </div>
-                <div className="text-end mt10 pr10">
-                  <button
-                    type="button"
-                    className="done-btn ud-btn btn-thm drop_btn"
-                  >
-                    Done
-                  </button>
-                </div>
               </div>
             </li>
-            {/* End li Listing Status */}
 
+            {/* PROPERTY TYPE */}
             <li className="list-inline-item position-relative">
               <button
                 type="button"
                 className="open-btn mb15 dropdown-toggle"
                 data-bs-toggle="dropdown"
-                data-bs-auto-close="outside"
               >
-                Property Type <i className="fa fa-angle-down ms-2" />
+                {typeLabel} <i className="fa fa-angle-down ms-2" />
               </button>
               <div className="dropdown-menu">
-                <div className="widget-wrapper bdrb1 pb25 mb0 pl20">
-                  <h6 className="list-title">Property Type</h6>
+                <div className="widget-wrapper pb15 mb0 px20">
+                  <h6 className="list-title mb10">Property Type</h6>
                   <div className="checkbox-style1">
-                    <PropertyType filterFunctions={filterFunctions}/>
+                    <PropertyType filterFunctions={filterFunctions} />
                   </div>
-                </div>
-                <div className="text-end mt10 pr10">
-                  <button
-                    type="button"
-                    className="done-btn ud-btn btn-thm dropdown-toggle"
-                  >
-                    Done
-                  </button>
                 </div>
               </div>
             </li>
-            {/* End li Property Type */}
 
+            {/* PRICE */}
             <li className="list-inline-item position-relative">
               <button
                 type="button"
                 className="open-btn mb15 dropdown-toggle"
                 data-bs-toggle="dropdown"
-                data-bs-auto-close="outside"
               >
-                Price <i className="fa fa-angle-down ms-2" />
+                {priceLabel} <i className="fa fa-angle-down ms-2" />
               </button>
 
               <div className="dropdown-menu dd3">
-                <div className="widget-wrapper bdrb1 pb25 mb0 pl20 pr20">
-                  <h6 className="list-title">Price Range</h6>
-                  {/* Range Slider Desktop Version */}
+                <div className="widget-wrapper mb0 px20">
+                  <h6 className="list-title mb10">Price Range</h6>
                   <div className="range-slider-style1">
-                    <PriceRange filterFunctions={filterFunctions}/>
+                    <PriceRange filterFunctions={filterFunctions} />
                   </div>
-                </div>
-                <div className="text-end mt10 pr10">
-                  <button
-                    type="button"
-                    className="done-btn ud-btn btn-thm drop_btn3"
-                  >
-                    Done
-                  </button>
                 </div>
               </div>
             </li>
-            {/* End li Price */}
 
+            {/* BEDS / BATHS */}
             <li className="list-inline-item position-relative">
               <button
                 type="button"
                 className="open-btn mb15 dropdown-toggle"
                 data-bs-toggle="dropdown"
-                data-bs-auto-close="outside"
               >
-                Beds / Baths <i className="fa fa-angle-down ms-2" />
+                {bbLabel} <i className="fa fa-angle-down ms-2" />
               </button>
-              <div className="dropdown-menu dd4 pb20">
-                <div className="widget-wrapper pl20 pr20">
-                  <h6 className="list-title">Bedrooms</h6>
+              <div className="dropdown-menu dd4 pb15">
+                <div className="widget-wrapper px20">
+                  <h6 className="list-title mb10">Bedrooms</h6>
                   <div className="d-flex">
-                    <Bedroom filterFunctions={filterFunctions}/>
+                    <Bedroom filterFunctions={filterFunctions} />
                   </div>
                 </div>
 
-                <div className="widget-wrapper bdrb1 pb25 mb0 pl20 pr20">
-                  <h6 className="list-title">Bathrooms</h6>
+                <div className="widget-wrapper pb10 mb0 px20">
+                  <h6 className="list-title mb10 mt10">Bathrooms</h6>
                   <div className="d-flex">
-                    <Bathroom filterFunctions={filterFunctions}/>
+                    <Bathroom filterFunctions={filterFunctions} />
                   </div>
-                </div>
-                <div className="text-end mt10 pr10">
-                  <button
-                    type="button"
-                    className="done-btn ud-btn btn-thm drop_btn4"
-                  >
-                    Done
-                  </button>
                 </div>
               </div>
             </li>
-            {/* End bed and bathroom check */}
 
+            {/* ADVANCED */}
             <li className="list-inline-item">
-              {/* Advance Features modal trigger */}
               <button
                 type="button"
                 className="open-btn mb15"
                 data-bs-toggle="modal"
                 data-bs-target="#advanceSeachModal"
               >
-                <i className="flaticon-settings me-2" /> More Filter
+                <i className="flaticon-settings me-2" /> More Filters
               </button>
             </li>
           </ul>
         </div>
       </div>
-      {/* End .col-9 */}
 
+      {/* RIGHT: sort + view toggle */}
       <div className="col-xl-3">
         <div className="page_control_shorting d-flex align-items-center justify-content-center justify-content-sm-end">
           <div className="pcs_dropdown pr10 d-flex align-items-center">
             <span style={{ minWidth: "60px" }}>Sort by</span>
-            <select className="form-select" onChange={(e)=>setCurrentSortingOption && setCurrentSortingOption(e.target.value)} >
+            <select
+              className="form-select"
+              onChange={(e) => onSortChange(e.target.value)}
+              defaultValue={sortDefault}
+            >
+              <option>Best Match</option>
               <option>Newest</option>
               <option>Best Seller</option>
-              <option>Best Match</option>
               <option>Price Low</option>
               <option>Price High</option>
             </select>
           </div>
-          <div className={`pl15 pr15 bdrl1 bdrr1 d-none d-md-block  cursor ${!colstyle? 'menuActive':'#' } `}    onClick={()=>setColstyle(false)}>
+
+          <div
+            className={`pl15 pr15 bdrl1 bdrr1 d-none d-md-block cursor ${!colstyle ? "menuActive" : ""}`}
+            onClick={() => setColstyle?.(false)}
+          >
             Grid
           </div>
-          <div className={`pl15 d-none d-md-block  cursor ${colstyle? 'menuActive':'#' }`}   onClick={()=>setColstyle(true)}>
+          <div
+            className={`pl15 d-none d-md-block cursor ${colstyle ? "menuActive" : ""}`}
+            onClick={() => setColstyle?.(true)}
+          >
             List
           </div>
         </div>
       </div>
-      {/* End .col-3 */}
+
+      <style jsx>{`
+        .dropdown-menu {
+          min-width: 260px;
+        }
+        .px20 { padding-left: 20px; padding-right: 20px; }
+        .open-btn { white-space: nowrap; }
+      `}</style>
     </>
   );
-};
-
-export default TopFilterBar;
+}

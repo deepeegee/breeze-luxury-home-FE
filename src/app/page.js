@@ -120,35 +120,30 @@ const HomePage = () => {
               >
                 <h2 className="title">Explore Cities</h2>
                 <p className="paragraph">
-                  Aliquam lacinia diam quis lacus euismod
-                </p>
+                Discover top-performing cities with high-growth potential. Whether you're buying your first home or expanding your investment portfolio, these locations offer the perfect blend of lifestyle, infrastructure, and long-term value.                </p>
               </div>
             </div>
             {/* End header */}
 
-            <div className="col-auto mb30">
+            {/* <div className="col-auto mb30">
               <div className="row align-items-center justify-content-center">
                 <div className="col-auto">
                   <button className="cities_prev__active swiper_button">
                     <i className="far fa-arrow-left-long" />
                   </button>
                 </div>
-                {/* End prev */}
 
                 <div className="col-auto">
                   <div className="pagination swiper--pagination cities_pagination__active" />
                 </div>
-                {/* End pagination */}
 
                 <div className="col-auto">
                   <button className="cities_next__active swiper_button">
                     <i className="far fa-arrow-right-long" />
                   </button>
                 </div>
-                {/* End Next */}
               </div>
-            </div>
-            {/* End .col for navigation and pagination */}
+            </div> */}
           </div>
           {/* End .row */}
 

@@ -11,6 +11,8 @@ import {
   updateListing,
   deleteListing,
   uploadListingPhoto,
+  getPropertyViews,        // ✅
+  recordPropertyView,      // ✅
 
   // Blogs
   getBlogs,
@@ -48,19 +50,72 @@ function adapt<T>(swr: any, fallback: T) {
 ========================= */
 
 export function useListings(params?: Record<string, any>) {
-  const key = params ? ['properties', JSON.stringify(params)] as const : ['properties'] as const;
+  const key = params ? (['properties', JSON.stringify(params)] as const) : (['properties'] as const);
   const swr = useSWR(key, () => getListings(params));
   return adapt<Listing[]>(swr, []);
 }
 
+// ✅ single-property endpoint directly
 export function useListing(id?: string | number) {
   const key = id != null ? (['property', id] as const) : null;
   const swr = useSWR(key, () => getListing(id as string | number));
   return adapt<Listing | null>(swr, null);
 }
 
+// ✅ optional: read current view count
+export function usePropertyViews(id?: string | number) {
+  const key = id != null ? (['property-views', id] as const) : null;
+  const swr = useSWR<number | null>(key, () => getPropertyViews(id as string | number));
+  return adapt<number | null>(swr, null);
+}
+
+// ✅ optional: total view count across current listings set
+export function useTotalPropertyViews() {
+  const { data: listings } = useListings();
+
+  // recompute only when the set of ids changes
+  const idsKey =
+    Array.isArray(listings) && listings.length
+      ? listings.map((p) => String(p.id)).sort().join(',')
+      : '';
+
+  const swr = useSWR<number>(
+    idsKey ? (['total-property-views', idsKey] as const) : null,
+    async () => {
+      const ids = (listings ?? []).map((p) => p.id).filter((x) => x != null);
+      const counts = await Promise.all(
+        ids.map(async (id) => {
+          try {
+            const n = await getPropertyViews(id as string | number);
+            return typeof n === 'number' && Number.isFinite(n) ? n : 0;
+          } catch {
+            return 0;
+          }
+        })
+      );
+      return counts.reduce((a, b) => a + b, 0);
+    }
+  );
+
+  return {
+    total: swr.data ?? 0,
+    isLoading: !!swr.isLoading,
+    error: (swr.error as Error) ?? null,
+    mutate: swr.mutate,
+  };
+}
+
+// ✅ optional: trigger recording from components
+export function useRecordPropertyView() {
+  return useSWRMutation<void, any, [string], { id: string | number; meta?: any }>(
+    ['record-property-view'],
+    async (_key, { arg }) => {
+      await recordPropertyView(arg.id, arg.meta);
+    }
+  );
+}
+
 export function useCreateListing() {
-  // Data=Listing, Error=any, Key=[string], ExtraArg=PropertyBE
   return useSWRMutation<Listing, any, [string], PropertyBE>(
     ['create-property'],
     async (_key, { arg }) => createListing(arg)
@@ -68,7 +123,6 @@ export function useCreateListing() {
 }
 
 export function useUpdateListing() {
-  // Data=Listing, ExtraArg={ id, data }
   return useSWRMutation<Listing, any, [string], { id: string | number; data: Partial<PropertyBE> }>(
     ['update-property'],
     async (_key, { arg }) => updateListing(arg.id, arg.data)
@@ -76,7 +130,6 @@ export function useUpdateListing() {
 }
 
 export function useDeleteListing() {
-  // Data=void, ExtraArg=string | number
   return useSWRMutation<void, any, [string], string | number>(
     ['delete-property'],
     async (_key, { arg }) => deleteListing(arg)
@@ -95,7 +148,7 @@ export function useUploadListingPhoto() {
 ========= */
 
 export function useBlogs(params?: Record<string, any>) {
-  const key = params ? ['blogs', JSON.stringify(params)] as const : ['blogs'] as const;
+  const key = params ? (['blogs', JSON.stringify(params)] as const) : (['blogs'] as const);
   const swr = useSWR(key, () => getBlogs(params));
   return adapt<Blog[]>(swr, []);
 }
@@ -129,7 +182,6 @@ export function useCities() {
 =============== */
 
 export function useLogin() {
-  // Data=any (token/user), ExtraArg={ email, password }
   return useSWRMutation<any, any, [string], { email: string; password: string }>(
     ['login'],
     async (_key, { arg }) => login(arg.email, arg.password)
@@ -137,7 +189,6 @@ export function useLogin() {
 }
 
 export function useRegisterAdmin() {
-  // Data=admin DTO, ExtraArg={ name, email, password }
   return useSWRMutation<any, any, [string], { name: string; email: string; password: string }>(
     ['register-admin'],
     async (_key, { arg }) => registerAdmin(arg)

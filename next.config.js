@@ -22,6 +22,16 @@ const nextConfig = {
       },
     ],
   },
+  webpack(config) {
+    // ✅ Add SVGR loader
+    config.module.rules.push({
+      test: /\.svg$/i,
+      issuer: /\.[jt]sx?$/,
+      use: ["@svgr/webpack"],
+    });
+
+    return config;
+  },
   async rewrites() {
     return [
       {

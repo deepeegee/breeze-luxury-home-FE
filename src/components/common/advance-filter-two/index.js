@@ -4,66 +4,99 @@ import PriceRange from "./PriceRange";
 import Bedroom from "./Bedroom";
 import Bathroom from "./Bathroom";
 import Amenities from "./Amenities";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-const AdvanceFilterModal = ({ filterFunctions }) => {
-  const [showSelect, setShowSelect] = useState(false);
+/** Normalize AMENITY_GROUPS into: [{ title: string, items: string[] }] */
+function normalizeAmenityGroups(src) {
+  if (!Array.isArray(src)) return [];
+  // Array of strings
+  if (src.length && typeof src[0] === "string") {
+    return [{ title: "Amenities", items: src }];
+  }
+  // Array of arrays
+  if (src.length && Array.isArray(src[0])) {
+    return src.map((arr, i) => ({
+      title: `Group ${i + 1}`,
+      items: (arr || []).filter(Boolean),
+    }));
+  }
+  // Array of objects: { title/label/name, items/amenities/values }
+  return src.map((g, i) => {
+    const title = g?.title || g?.label || g?.name || `Group ${i + 1}`;
+    const items = Array.isArray(g?.items)
+      ? g.items
+      : Array.isArray(g?.amenities)
+      ? g.amenities
+      : Array.isArray(g?.values)
+      ? g.values
+      : [];
+    return { title, items: items.filter(Boolean) };
+  });
+}
+
+// Our property types
+const CAT_OPTIONS = [
+  { value: "Fully-Detached Duplex", label: "Duplex" },
+  { value: "Bungalow", label: "Bungalow" },
+  { value: "Apartment", label: "Apartments" },
+  { value: "Townhome", label: "Town home" },
+  { value: "Office", label: "Offices" },
+  { value: "Factory", label: "Factory" },
+  { value: "Land & Plots", label: "Land & Plots" },
+];
+
+const customStyles = {
+  option: (styles, { isFocused, isSelected, isHovered }) => ({
+    ...styles,
+    backgroundColor: isSelected
+      ? "#eb6753"
+      : isHovered || isFocused
+      ? "#eb675312"
+      : undefined,
+  }),
+};
+
+export default function AdvanceFilterModal({
+  filterFunctions,
+  amenitiesOptions = [],
+  locationOptions = [],
+}) {
   const [mounted, setMounted] = useState(false);
-  
-  useEffect(() => {
-    setMounted(true);
-    setShowSelect(true);
-  }, []);
-  const catOptions = [
-    { value: "Houses", label: "Houses" },
-    { value: "Office", label: "Office" },
-    { value: "Apartments", label: "Apartments" },
-    { value: "Villa", label: "Villa" },
-  ];
+  useEffect(() => setMounted(true), []);
 
-  const locationOptions = [
-    { value: "All Cities", label: "All Cities" },
-    { value: "California", label: "California" },
-    { value: "Los Angeles", label: "Los Angeles" },
-    { value: "New Jersey", label: "New Jersey" },
-    { value: "New York", label: "New York" },
-    { value: "San Diego", label: "San Diego" },
-    { value: "San Francisco", label: "San Francisco" },
-    { value: "Texas", label: "Texas" },
-  ];
+  const amenityGroups = useMemo(
+    () => normalizeAmenityGroups(amenitiesOptions),
+    [amenitiesOptions]
+  );
 
-  const customStyles = {
-    option: (styles, { isFocused, isSelected, isHovered }) => {
-      return {
-        ...styles,
-        backgroundColor: isSelected
-          ? "#eb6753"
-          : isHovered
-          ? "#eb675312"
-          : isFocused
-          ? "#eb675312"
-          : undefined,
-      };
-    },
-  };
+  // Build select options for cities
+  const cityOptions = useMemo(() => {
+    if (!Array.isArray(locationOptions)) return [];
+    if (locationOptions.length && typeof locationOptions[0] === "object" && "value" in locationOptions[0]) {
+      return locationOptions;
+    }
+    return locationOptions.map((c) => ({ value: c, label: c }));
+  }, [locationOptions]);
+
+  const currentCity =
+    cityOptions.find((o) => o.value === filterFunctions?.location) ||
+    cityOptions[0] ||
+    { value: "All Cities", label: "All Cities" };
+
+  const selectedTypeValue = filterFunctions?.propertyTypes?.[0] || null;
+  const selectedType =
+    CAT_OPTIONS.find((o) => o.value === selectedTypeValue) || null;
 
   return (
     <div className="modal-dialog modal-dialog-centered modal-lg">
       <div className="modal-content">
         <div className="modal-header pl30 pr30">
-          <h5 className="modal-title" id="exampleModalLabel">
-            More Filter
-          </h5>
-          <button
-            type="button"
-            className="btn-close"
-            data-bs-dismiss="modal"
-            aria-label="Close"
-          />
+          <h5 className="modal-title">More Filter</h5>
+          <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" />
         </div>
-        {/* End modal-header */}
 
         <div className="modal-body pb-0">
+          {/* Price */}
           <div className="row">
             <div className="col-lg-12">
               <div className="widget-wrapper">
@@ -74,31 +107,31 @@ const AdvanceFilterModal = ({ filterFunctions }) => {
               </div>
             </div>
           </div>
-          {/* End .row */}
 
+          {/* Type / Beds */}
           <div className="row">
             <div className="col-sm-6">
               <div className="widget-wrapper">
                 <h6 className="list-title">Type</h6>
                 <div className="form-style2 input-group">
-                  {mounted && showSelect && (
+                  {mounted && (
                     <Select
-                      defaultValue={catOptions[1]}
-                      name="colors"
-                      options={catOptions}
+                      placeholder="Select type"
+                      options={CAT_OPTIONS}
                       styles={customStyles}
-                      onChange={(e) =>
-                        filterFunctions?.setPropertyTypes([e.value])
-                      }
                       className="select-custom"
                       classNamePrefix="select"
-                      required
+                      isClearable
+                      value={selectedType}
+                      onChange={(opt) => {
+                        const val = opt?.value ? [opt.value] : [];
+                        filterFunctions?.setPropertyTypes?.(val);
+                      }}
                     />
                   )}
                 </div>
               </div>
             </div>
-            {/* End .col-6 */}
 
             <div className="col-sm-6">
               <div className="widget-wrapper">
@@ -108,10 +141,9 @@ const AdvanceFilterModal = ({ filterFunctions }) => {
                 </div>
               </div>
             </div>
-            {/* End .col-6 */}
           </div>
-          {/* End .row */}
 
+          {/* Baths / Location */}
           <div className="row">
             <div className="col-sm-6">
               <div className="widget-wrapper">
@@ -121,108 +153,59 @@ const AdvanceFilterModal = ({ filterFunctions }) => {
                 </div>
               </div>
             </div>
-            {/* End .col-6 */}
 
             <div className="col-sm-6">
               <div className="widget-wrapper">
                 <h6 className="list-title">Location</h6>
                 <div className="form-style2 input-group">
-                  {mounted && showSelect && (
+                  {mounted && (
                     <Select
-                      defaultValue={locationOptions[0]}
-                      name="colors"
+                      options={cityOptions}
                       styles={customStyles}
-                      options={locationOptions}
                       className="select-custom filterSelect"
-                      value={mounted && filterFunctions?.location ? {
-                        value: filterFunctions.location,
-                        label: filterFunctions.location,
-                      } : locationOptions[0]}
                       classNamePrefix="select"
-                      onChange={(e) => filterFunctions?.handlelocation(e.value)}
-                      required
+                      value={currentCity}
+                      onChange={(opt) =>
+                        filterFunctions?.handlelocation?.(opt?.value || "All Cities")
+                      }
+                      isClearable
                     />
                   )}
                 </div>
               </div>
             </div>
-            {/* End .col-md-6 */}
           </div>
-          {/* End .row */}
 
-          <div className="row">
-            <div className="col-sm-6">
-              <div className="widget-wrapper">
-                <h6 className="list-title">Square Feet</h6>
-                <div className="space-area">
-                  <div className="d-flex align-items-center justify-content-between">
-                    <div className="form-style1">
-                      <input
-                        type="number"
-                        className="form-control filterInput"
-                        onChange={(e) =>
-                          filterFunctions?.handlesquirefeet([
-                            e.target.value,
-                            document.getElementById("maxFeet3").value / 1,
-                          ])
-                        }
-                        placeholder="Min."
-                        id="minFeet3"
-                      />
-                    </div>
-                    <span className="dark-color">-</span>
-                    <div className="form-style1">
-                      <input
-                        type="number"
-                        className="form-control filterInput"
-                        placeholder="Max"
-                        id="maxFeet3"
-                        onChange={(e) =>
-                          filterFunctions?.handlesquirefeet([
-                            document.getElementById("minFeet3").value / 1,
-                            e.target.value,
-                          ])
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* End .col-md-6 */}
-          </div>
-          {/* End .row */}
-
+          {/* Amenities */}
           <div className="row">
             <div className="col-lg-12">
               <div className="widget-wrapper mb0">
                 <h6 className="list-title mb10">Amenities</h6>
               </div>
             </div>
-            <Amenities filterFunctions={filterFunctions} />
+            <Amenities
+              groups={amenityGroups}
+              selected={filterFunctions?.categories || []}
+              onChange={(next) => {
+                if (filterFunctions?.setCategories) filterFunctions.setCategories(next);
+              }}
+            />
           </div>
         </div>
-        {/* End modal body */}
 
         <div className="modal-footer justify-content-between">
-          <button
-            className="reset-button"
-            onClick={() => filterFunctions?.resetFilter()}
-          >
+          <button className="reset-button" onClick={() => filterFunctions?.resetFilter?.()}>
             <span className="flaticon-turn-back" />
             <u>Reset all filters</u>
           </button>
           <div className="btn-area">
-            <button type="submit" className="ud-btn btn-thm">
+            <button type="button" className="ud-btn btn-thm" data-bs-dismiss="modal">
               <span className="flaticon-search align-text-top pr10" />
-              Search
+              Close
             </button>
           </div>
         </div>
-        {/* End modal-footer */}
       </div>
     </div>
   );
-};
-
-export default AdvanceFilterModal;
+}

@@ -8,11 +8,14 @@ const FilterHeader = ({
   onSearchChange,
   sort,
   onSortChange,
+  availability = "All",                // "All" | "For sale" | "Sold"
+  onAvailabilityChange,                // (val) => void
 }) => {
   const router = useRouter();
 
   return (
     <div className="dashboard_search_meta d-md-flex align-items-center justify-content-xxl-end">
+      {/* Search */}
       <div className="item1 mb15-sm">
         <div className="search_area">
           <input
@@ -28,11 +31,26 @@ const FilterHeader = ({
         </div>
       </div>
 
+      {/* Availability filter */}
       <div className="page_control_shorting bdr1 bdrs12 py-2 ps-3 pe-2 mx-1 mx-xxl-3 bgc-white mb15-sm maxw160">
         <div className="pcs_dropdown d-flex align-items-center">
-          <span style={{ minWidth: "50px" }} className="title-color">
-            Sort by:
-          </span>
+          <span style={{ minWidth: "74px" }} className="title-color">Availability:</span>
+          <select
+            className="form-select show-tick"
+            value={availability}
+            onChange={(e) => onAvailabilityChange?.(e.target.value)}
+          >
+            <option value="All">All</option>
+            <option value="For sale">For sale</option>
+            <option value="Sold">Sold</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Sort */}
+      <div className="page_control_shorting bdr1 bdrs12 py-2 ps-3 pe-2 mx-1 mx-xxl-3 bgc-white mb15-sm maxw160">
+        <div className="pcs_dropdown d-flex align-items-center">
+          <span style={{ minWidth: "50px" }} className="title-color">Sort by:</span>
           <select
             className="form-select show-tick"
             value={sort}

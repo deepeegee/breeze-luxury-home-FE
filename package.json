@@ -15,6 +15,7 @@
     "bootstrap": "5.3.6",
     "country-state-city": "^3.2.1",
     "eslint": "9.27.0",
+    "naija-state-local-government": "^1.1.2",
     "next": "^15.4.6",
     "photoswipe": "^5.4.4",
     "prop-types": "15.8.1",
@@ -31,5 +32,8 @@
     "sass": "^1.89.0",
     "swiper": "^11.2.8",
     "swr": "^2.3.6"
+  },
+  "devDependencies": {
+    "@svgr/webpack": "^8.1.0"
   }
 }

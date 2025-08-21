@@ -1,40 +1,32 @@
-'use client'
+"use client";
 
-const Amenities = ({filterFunctions}) => {
-  const amenities = [
-    [
-      { label: "Attic" },
-    { label: "Basketball court", defaultChecked: true },
-    { label: "Air Conditioning", defaultChecked: true },
-    { label: "Lawn", defaultChecked: true },
-    ],
-    [
-      { label: "TV Cable" },
-      { label: "Dryer" },
-      { label: "Outdoor Shower" },
-    { label: "Washer" },
-    ],
-    [
-      { label: "Lake view" },
-      { label: "Wine cellar" },
-      { label: "Front yard" },
-      { label: "Refrigerator" },
-    ],
-  ];
+export default function Amenities({
+  groups = [],
+  selected = [],
+  onChange,
+}) {
+  const toggle = (label) => {
+    const has = selected.includes(label);
+    const next = has ? selected.filter((x) => x !== label) : [...selected, label];
+    onChange(next);
+  };
+
+  if (!groups.length) return null;
 
   return (
     <>
-      {amenities.map((column, columnIndex) => (
-        <div className="col-sm-4" key={columnIndex}>
+      {groups.map((g, gi) => (
+        <div className="col-sm-4" key={`amenity-group-${gi}`}>
           <div className="widget-wrapper mb20">
+            <div className="fw600 mb10">{g.title}</div>
             <div className="checkbox-style1">
-              {column.map((amenity, amenityIndex) => (
-                <label className="custom_checkbox" key={amenityIndex}>
-                  {amenity.label}
+              {g.items.map((label, i) => (
+                <label className="custom_checkbox" key={`${g.title}-${label}-${i}`}>
+                  {label}
                   <input
-                    checked={filterFunctions?.categories?.includes(amenity.label) || false}
-                    onChange={() => filterFunctions?.handlecategories?.(amenity.label)}
                     type="checkbox"
+                    checked={selected.includes(label)}
+                    onChange={() => toggle(label)}
                   />
                   <span className="checkmark" />
                 </label>
@@ -45,6 +37,4 @@ const Amenities = ({filterFunctions}) => {
       ))}
     </>
   );
-};
-
-export default Amenities;
+}

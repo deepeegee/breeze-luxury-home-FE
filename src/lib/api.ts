@@ -1,24 +1,71 @@
-// src/lib/api.ts
-
 export type Listing = {
   id: number | string;
   image: string | null;
+
+  // basics
   title: string;
-  city?: string;
+  name?: string;
+  propertyId?: string;
   description?: string;
-  location?: string;
+
+  // location
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  zip?: string;
+  location?: string; // "address, city, state, country"
+
+  // stats
   bed?: number;
   bath?: number;
-  sqft?: number;
+  sqft?: number;          // sizeInFt
+  rooms?: number;
   price?: number;
+  afterPriceLabel?: string;
+  yearlyTaxRate?: number;
+
+  // structure/floors
+  floorsNo?: number;
+  totalFloors?: number;
+  floorDetails?: { floorNumber?: number; price?: number }[];
+
+  // media
+  photos?: { url: string; isFeatured?: boolean }[];
+  videoSource?: string;
+  videoEmbedId?: string;
+  virtualTourUrl?: string;
+
+  // availability / status
   forRent?: boolean;
-  tags?: string[];
-  propertyType?: string;
-  yearBuilding?: number;
-  featured?: boolean;
+  availability?: string;
+  listedIn?: string;
+  status?: string;
+  featured?: boolean;     // kept for legacy UI; not used for hero now
+
+  // extras
+  amenities?: string[];
+  tags?: string[];        // alias of amenities
+  propertyType?: string;  // category
+  yearBuilding?: number;  // yearBuilt
+  ownerNotes?: string;
+
+  // optional villa details
+  garages?: number;
+  garageSize?: number;
+  basement?: string;
+  extraDetails?: string;
+  roofing?: string;
+  exteriorMaterial?: string;
+
+  // nearby
+  nearby?: { label?: string; distance?: string; category?: string }[];
+
+  // telemetry / map
+  viewCount?: number;
   lat?: number;
   long?: number;
-  features?: string[];
+  features?: string[];    // alias of amenities
 };
 
 export type Blog = {
@@ -42,65 +89,99 @@ export type Testimonial = {
   company: string;
 };
 
-// ------- BE shapes -------
-type PhotoBE = { url: string; isFeatured?: boolean }; // BE ignores isFeatured on photo; we strip it when sending
+/* ===============================
+   BE shapes (what server returns)
+================================ */
+type PhotoBE = { url: string; isFeatured?: boolean };
+type FloorDetailBE = { floorNumber?: number; price?: number };
+type NearbyBE = { label?: string; distance?: string; category?: string };
 
 export type PropertyBE = {
   id?: number | string;
   _id?: string;
   propertyId?: string;
 
+  // basics
   title: string;
   description?: string;
   name?: string;
   category?: string;
-  listedIn?: string;
-  status?: string;
+  listedIn?: string;       // e.g. "Active"
+  status?: string;         // e.g. "Published"
   price?: number;
+  afterPriceLabel?: string;
+  yearlyTaxRate?: number;
   photos?: PhotoBE[];
 
+  // location
   address?: string;
   country?: string;
   state?: string;
   city?: string;
+  zip?: string;
 
+  // size / rooms
   sizeInFt?: number;
   lotSizeInFt?: number;
   rooms?: number;
   bedrooms?: number;
   bathrooms?: number;
+
+  // structure / floors
+  floorsNo?: number;
+  totalFloors?: number;
+  floorDetails?: FloorDetailBE[];
+
+  // media
+  videoSource?: string;
+  videoEmbedId?: string;
+  virtualTourUrl?: string;
+
+  // dates
   yearBuilt?: number;
   availableFrom?: string;
-  structureType?: string;
-  floorsNo?: number;
-  amenities?: string[];
 
+  // availability
+  propertyAvailability?: string;
+
+  // extras
+  amenities?: string[];
+  garages?: number;
+  garageSize?: number;
+  basement?: string;
+  extraDetails?: string;
+  roofing?: string;
+  exteriorMaterial?: string;
+  ownerNotes?: string;
+
+  // map
   lat?: number;
   long?: number;
 
-  // some APIs return this at the property level
+  // nearby
+  nearby?: NearbyBE[];
+
+  // flags
   isFeatured?: boolean;
+  viewCount?: number;
+
+  // legacy that FE ignores
+  structureType?: string;
 };
 
-// ------- base -------
 const API_BASE = "/api";
 
-// ------- helpers -------
+/* ========================
+   Shared helpers
+======================== */
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${path}`;
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
   Object.assign(headers, (init.headers as Record<string, string>) || {});
 
   console.log(`API Request to: ${url}`, { headers, method: init.method || "GET" });
 
-  const res = await fetch(url, {
-    credentials: "include",
-    headers,
-    ...init,
-  });
+  const res = await fetch(url, { credentials: "include", headers, ...init });
 
   console.log(`API Response from: ${url}`, {
     status: res.status,
@@ -126,10 +207,18 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new Error(msg);
   }
 
-  const contentLength = res.headers.get("content-length");
-  if (contentLength === "0") {
-    console.log("Empty response body, returning empty object");
-    return {} as T;
+  // treat 204/empty body as empty object
+  const contentType = res.headers.get('content-type') || '';
+  const contentLength = res.headers.get('content-length');
+  if (res.status === 204 || contentLength === '0' || !contentType.includes('application/json')) {
+    try {
+      const text = await res.text();
+      if (!text || !text.trim()) return {} as T;
+      // if server returned text/json-like, try parse
+      return JSON.parse(text) as T;
+    } catch {
+      return {} as T;
+    }
   }
 
   try {
@@ -141,9 +230,7 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     try {
       const textResponse = await res.text();
       console.log("Response as text:", textResponse);
-      if (textResponse.trim() === "") {
-        return {} as T;
-      }
+      if (textResponse.trim() === "") return {} as T;
       throw new Error(`Invalid JSON response: ${textResponse}`);
     } catch {
       throw new Error("Failed to parse response as JSON or text");
@@ -154,14 +241,12 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 async function apiFetchForm<T>(path: string, form: FormData): Promise<T> {
   const url = `${API_BASE}${path}`;
   const headers: Record<string, string> = {};
-
   const res = await fetch(url, {
     method: "POST",
     credentials: "include",
     headers,
     body: form,
   });
-
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
     try {
@@ -170,11 +255,9 @@ async function apiFetchForm<T>(path: string, form: FormData): Promise<T> {
     } catch {}
     throw new Error(msg);
   }
-
   return res.json() as Promise<T>;
 }
 
-// ------- query -------
 function toQueryString(params?: Record<string, any>): string {
   if (!params) return "";
   const qs = new URLSearchParams();
@@ -188,59 +271,122 @@ function toQueryString(params?: Record<string, any>): string {
   return out ? `?${out}` : "";
 }
 
-// ------- photo sanitization (fixes 400) -------
+// Normalize photos for BE posting: keep only { url }, move featured first.
 function normalizePhotos(input?: PhotoBE[]): { url: string }[] | undefined {
   if (!Array.isArray(input)) return undefined;
 
-  // keep only items with a valid url
   const items = input
     .filter((p) => p && typeof p.url === "string" && p.url.trim() !== "")
-    .map((p) => ({ ...p })); // shallow copy
+    .map((p) => ({ ...p }));
 
   if (items.length === 0) return [];
 
-  // if any photo was marked isFeatured=true on the client, move it to the front
   const featuredIdx = items.findIndex((p: any) => p.isFeatured === true);
   if (featuredIdx > 0) {
     const [feat] = items.splice(featuredIdx, 1);
     items.unshift(feat);
   }
-
-  // strip isFeatured from each photo before sending to BE
-  const stripped = items.map(({ url }) => ({ url }));
-  return stripped;
+  return items.map(({ url }) => ({ url }));
 }
 
-// ------- mapper -------
+/* ========================
+   Mapper (BE -> FE)
+======================== */
 function toListing(p: PropertyBE): Listing {
-  const featuredPhoto =
-    p.photos?.find((ph) => ph.isFeatured) ?? p.photos?.[0];
+  // pick the first valid photo; don’t depend on isFeatured
+  const hero =
+    (Array.isArray(p.photos) ? p.photos.find((ph) => ph?.url) : undefined) ??
+    (Array.isArray(p.photos) ? p.photos[0] : undefined);
 
   const id = (p as any)._id ?? p.id ?? p.propertyId ?? "";
 
   const toNum = (v: any) =>
     typeof v === "number" ? v : Number(String(v ?? "").replace(/\$|,/g, ""));
 
+  const clean = (s?: any) => (typeof s === "string" ? s.trim() : s);
+
+  const locParts = [p.address, p.city, p.state, p.country]
+    .map(clean)
+    .filter((x) => typeof x === "string" && x && x !== "N/A");
+
+  const availability =
+    clean(p.propertyAvailability) ||
+    (typeof p.listedIn === "string" && /active|available/i.test(p.listedIn)
+      ? "Available"
+      : undefined);
+
+  const floorDetails = Array.isArray(p.floorDetails)
+    ? p.floorDetails.map((fd) => ({
+        floorNumber: typeof fd?.floorNumber === "number" ? fd.floorNumber : undefined,
+        price: typeof fd?.price === "number" ? fd.price : toNum(fd?.price),
+      }))
+    : undefined;
+
+  const nearby = Array.isArray(p.nearby)
+    ? p.nearby.map((n) => ({
+        label: clean(n?.label),
+        distance: clean(n?.distance),
+        category: clean(n?.category),
+      }))
+    : undefined;
+
   const mapped: Listing = {
     id,
-    image: featuredPhoto?.url ?? null,
-    title: p.title || p.name || "Property",
-    city: p.city,
-    location: [p.address, p.city, p.state, p.country].filter(Boolean).join(", "),
+    image: hero?.url ?? null,
+
+    title: clean(p.title) || clean(p.name) || "Property",
+    name: clean(p.name),
+    propertyId: clean(p.propertyId),
+    description: clean(p.description),
+
+    address: clean(p.address),
+    city: clean(p.city),
+    state: clean(p.state),
+    country: clean(p.country),
+    zip: clean(p.zip),
+    location: locParts.join(", "),
+
     bed: (p as any).bed ?? p.bedrooms,
     bath: (p as any).bath ?? p.bathrooms,
     sqft: p.sizeInFt,
+    rooms: p.rooms,
     price: toNum(p.price),
-    description: p.description || undefined,
+    afterPriceLabel: clean(p.afterPriceLabel),
+    yearlyTaxRate: typeof p.yearlyTaxRate === "number" ? p.yearlyTaxRate : toNum(p.yearlyTaxRate),
+
+    floorsNo: p.floorsNo,
+    totalFloors: p.totalFloors,
+    floorDetails,
+
+    photos: Array.isArray(p.photos)
+      ? p.photos.filter((ph) => typeof ph?.url === "string" && /^https?:\/\//.test(ph.url))
+      : undefined,
+    videoSource: clean(p.videoSource),
+    videoEmbedId: clean(p.videoEmbedId),
+    virtualTourUrl: clean(p.virtualTourUrl),
+
     forRent: typeof p.listedIn === "string" ? /rent/i.test(p.listedIn) : undefined,
+    availability,
+    listedIn: clean(p.listedIn),
+    status: clean(p.status),
+    featured: typeof p.isFeatured === "boolean" ? p.isFeatured : false, // legacy only
+
+    amenities: p.amenities,
     tags: p.amenities,
     propertyType: p.category,
     yearBuilding: p.yearBuilt,
-    // prefer property-level isFeatured; else per-photo flag (older FE) ; else false
-    featured:
-      typeof p.isFeatured === "boolean"
-        ? p.isFeatured
-        : !!(p.photos && p.photos.some((ph) => ph.isFeatured)),
+    ownerNotes: clean(p.ownerNotes),
+
+    garages: p.garages,
+    garageSize: p.garageSize,
+    basement: clean(p.basement),
+    extraDetails: clean(p.extraDetails),
+    roofing: clean(p.roofing),
+    exteriorMaterial: clean(p.exteriorMaterial),
+
+    nearby,
+
+    viewCount: typeof p.viewCount === "number" ? p.viewCount : undefined,
     lat: p.lat,
     long: p.long,
     features: p.amenities,
@@ -249,9 +395,9 @@ function toListing(p: PropertyBE): Listing {
   return mapped;
 }
 
-/* ================
-   AUTH / ADMINS
-================ */
+/* =======================
+   AUTH / ADMIN (exports)
+======================= */
 export function login(email: string, password: string) {
   return apiFetch<{ token?: string; user?: any }>(`/auth/login`, {
     method: "POST",
@@ -275,22 +421,69 @@ export function getAdminMe() {
   return apiFetch<{ id: string | number; name: string; email: string }>(`/admins/me`);
 }
 
-/* ================
-   PROPERTIES
-================ */
+/* =======================
+   PROPERTIES (exports)
+======================= */
 export function getListings(params?: Record<string, any>) {
   const qs = toQueryString(params);
   return apiFetch<PropertyBE[]>(`/properties${qs}`).then((list) => list.map(toListing));
 }
 
+// ✅ single property (e.g. http://localhost:4000/properties/:id)
 export function getListing(id: string | number) {
   return apiFetch<PropertyBE>(`/properties/${id}`).then(toListing);
 }
 
-export function createListing(payload: PropertyBE) {
-  // sanitize photos for BE (strip isFeatured and move featured to front)
-  const photos = normalizePhotos(payload.photos);
+// ✅ views: GET count (supports number | {count} | {views} | {data:{count}})
+export async function getPropertyViews(id: string | number): Promise<number | null> {
+  try {
+    const res = await apiFetch<any>(`/properties/${id}/views`);
+    if (typeof res === 'number') return res;
+    if (res?.count != null) return Number(res.count);
+    if (res?.views != null) return Number(res.views);
+    if (res?.data?.count != null) return Number(res.data.count);
+    return null;
+  } catch (e) {
+    console.warn('getPropertyViews failed', e);
+    return null;
+  }
+}
 
+// ✅ views: POST record (sendBeacon + keepalive)
+type ViewPingPayload = {
+  route?: string;
+  referrer?: string;
+  ts?: number;
+  source?: string;
+  sessionId?: string;
+};
+export async function recordPropertyView(id: string | number, meta: ViewPingPayload = {}) {
+  const path = `/properties/${id}/views`;
+  const body = JSON.stringify({ ...meta, ts: meta.ts ?? Date.now() });
+
+  if (typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
+    try {
+      const blob = new Blob([body], { type: 'application/json' });
+      (navigator as any).sendBeacon?.(`${API_BASE}${path}`, blob);
+      return;
+    } catch { /* fallback to fetch */ }
+  }
+
+  try {
+    await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      keepalive: true,
+      body,
+    });
+  } catch (err) {
+    console.warn('recordPropertyView failed', err);
+  }
+}
+
+export function createListing(payload: PropertyBE) {
+  const photos = normalizePhotos(payload.photos);
   return apiFetch<PropertyBE>(`/properties/create`, {
     method: "POST",
     body: JSON.stringify({ ...payload, photos }),
@@ -302,9 +495,7 @@ export function createListing(payload: PropertyBE) {
 
 export function updateListing(id: string | number, data: Partial<PropertyBE>) {
   const next: Partial<PropertyBE> = { ...data };
-  if (data.photos) {
-    next.photos = normalizePhotos(data.photos) as any;
-  }
+  if (data.photos) next.photos = normalizePhotos(data.photos) as any;
   return apiFetch<PropertyBE>(`/properties/${id}`, {
     method: "PATCH",
     body: JSON.stringify(next),
@@ -316,11 +507,9 @@ export function deleteListing(id: string | number) {
 }
 
 export function uploadListingPhoto(file: File) {
-  // BE expects one of: file | image | photo | upload | picture
   const form = new FormData();
   form.append("file", file);
   return apiFetchForm<{ url?: string; logo?: string }>(`/properties/photo`, form).then((res: any) => {
-    // Normalize to { url }
     const url =
       res?.url ||
       res?.logo ||
@@ -331,16 +520,16 @@ export function uploadListingPhoto(file: File) {
       res?.fileUrl ||
       res?.secure_url ||
       null;
-
     if (!url) throw new Error("No URL returned");
     return { url } as { url: string };
   });
 }
 
-/* ================
-   BLOGS / TESTIMONIALS (stubs)
-================ */
-export const getBlogs = (params?: Record<string, any>) => Promise.resolve([] as any[]);
-export const getBlog = (id: string | number) => Promise.resolve(null);
-export const getTestimonials = () => Promise.resolve([] as any[]);
-export const getCities = () => Promise.resolve([] as any[]);
+/* =======================
+   BLOGS / TESTIMONIALS
+======================= */
+export const getBlogs = (params?: Record<string, any>) => Promise.resolve([] as Blog[]);
+export const getBlog = (id: string | number) => Promise.resolve(null as Blog | null);
+export const getTestimonials = () => Promise.resolve([] as Testimonial[]);
+export const getCities = () =>
+  Promise.resolve([] as { id: number; name: string; image: string; count: number }[]);

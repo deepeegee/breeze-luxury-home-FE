@@ -1,65 +1,70 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import Select from "react-select";
-import { State, City } from "country-state-city";
+import NaijaStates from "naija-state-local-government";
 
 const customStyles = {
-  option: (styles, { isFocused, isSelected, isHovered }) => ({
+  option: (styles, { isFocused, isSelected }) => ({
     ...styles,
-    backgroundColor: isSelected
-      ? "#eb6753"
-      : (isHovered || isFocused)
-      ? "#eb675312"
-      : undefined,
+    backgroundColor: isSelected ? "#eb6753" : isFocused ? "#eb675312" : undefined,
   }),
 };
+
+function getLgasSafely(stateName) {
+  if (!stateName) return [];
+  const lgaResp = (NaijaStates.lgas ?? NaijaStates.lga)?.(stateName);
+  if (Array.isArray(lgaResp)) return lgaResp;
+  if (Array.isArray(lgaResp?.lgas)) return lgaResp.lgas;
+  return [];
+}
 
 const SelectMulitField = () => {
   const [showSelect, setShowSelect] = useState(false);
 
   // Selected values
-  const [stateIso, setStateIso] = useState("");   // e.g. "LA"
   const [stateName, setStateName] = useState(""); // e.g. "Lagos"
-  const [cityName, setCityName] = useState("");   // e.g. "Ikoyi"
+  const [lgaName, setLgaName] = useState("");     // e.g. "Ikorodu"
 
   useEffect(() => setShowSelect(true), []);
 
-  // Load states once
+  // States
   const stateOptions = useMemo(() => {
-    const states = State.getStatesOfCountry("NG") || [];
-    return states.map((s) => ({
-      value: s.isoCode,
-      label: s.name,
-      data: s,
-    }));
+    const list = (NaijaStates.states && NaijaStates.states()) || [];
+    return list
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b))
+      .map((name) => ({ value: name, label: name }));
   }, []);
 
-  // Load cities when state changes
-  const cityOptions = useMemo(() => {
-    if (!stateIso) return [];
-    const cities = City.getCitiesOfState("NG", stateIso) || [];
-    return cities.map((c) => ({ value: c.name, label: c.name }));
-  }, [stateIso]);
+  // LGAs for the chosen state
+  const lgaOptions = useMemo(() => {
+    if (!stateName) return [];
+    const lgas = getLgasSafely(stateName);
+    return lgas
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b))
+      .map((name) => ({ value: name, label: name }));
+  }, [stateName]);
 
-  // Keep city consistent when state changes
+  // Reset LGA if invalid after state change
   useEffect(() => {
-    if (!stateIso) {
-      setCityName("");
-      setStateName("");
+    if (!stateName) {
+      setLgaName("");
       return;
     }
-    // If current city no longer valid, clear it
-    if (cityName && !cityOptions.find((o) => o.value === cityName)) {
-      setCityName("");
+    if (lgaName && !lgaOptions.find((o) => o.value === lgaName)) {
+      setLgaName("");
     }
-  }, [stateIso, cityOptions, cityName]);
+  }, [stateName, lgaOptions, lgaName]);
 
   return (
     <>
       {/* Hidden inputs collected by parent form */}
       <input type="hidden" name="state" value={stateName} />
-      <input type="hidden" name="stateCode" value={stateIso} />
-      <input type="hidden" name="city" value={cityName} />
+      <input type="hidden" name="stateCode" value="" />
+      <input type="hidden" name="lga" value={lgaName} />
+      {/* Submit LGA as city */}
+      <input type="hidden" name="city" value={lgaName} />
 
       {/* State */}
       <div className="col-sm-6 col-xl-4">
@@ -74,17 +79,8 @@ const SelectMulitField = () => {
                 className="select-custom pl-0"
                 classNamePrefix="select"
                 isMulti={false}
-                value={
-                  stateIso
-                    ? stateOptions.find((o) => o.value === stateIso) || null
-                    : null
-                }
-                onChange={(opt) => {
-                  const iso = opt?.value ?? "";
-                  const name = opt?.data?.name ?? "";
-                  setStateIso(iso);
-                  setStateName(name);
-                }}
+                value={stateName ? stateOptions.find((o) => o.value === stateName) : null}
+                onChange={(opt) => setStateName(opt?.value ?? "")}
                 isClearable
               />
             )}
@@ -92,26 +88,22 @@ const SelectMulitField = () => {
         </div>
       </div>
 
-      {/* City */}
+      {/* LGA */}
       <div className="col-sm-6 col-xl-4">
         <div className="mb20">
-          <label className="heading-color ff-heading fw600 mb10">City</label>
+          <label className="heading-color ff-heading fw600 mb10">LGA</label>
           <div className="location-area">
             {showSelect && (
               <Select
-                placeholder={stateIso ? "Select city" : "Select state first"}
-                options={cityOptions}
+                placeholder={stateName ? "Select LGA" : "Select state first"}
+                options={lgaOptions}
                 styles={customStyles}
                 className="select-custom pl-0"
                 classNamePrefix="select"
                 isMulti={false}
-                isDisabled={!stateIso}
-                value={
-                  cityName
-                    ? cityOptions.find((o) => o.value === cityName) || null
-                    : null
-                }
-                onChange={(opt) => setCityName(opt?.value ?? "")}
+                isDisabled={!stateName}
+                value={lgaName ? lgaOptions.find((o) => o.value === lgaName) : null}
+                onChange={(opt) => setLgaName(opt?.value ?? "")}
                 isClearable
               />
             )}

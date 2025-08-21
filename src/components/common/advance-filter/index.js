@@ -65,7 +65,6 @@ const AdvanceFilterModal = () => {
     if (beds) qs.set("beds", String(beds));
     if (baths) qs.set("baths", String(baths));
 
-    // ✅ Amenities chosen in the checklist
     const amenities = Array.from(document.querySelectorAll('input[name="amenity"]:checked'))
       .map(el => el.value);
     if (amenities.length) qs.set("amenities", amenities.join(","));
