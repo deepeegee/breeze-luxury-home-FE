@@ -4,7 +4,7 @@ import Pagination from "@/components/property/Pagination";
 import DboardMobileNavigation from "@/components/property/dashboard/DboardMobileNavigation";
 import Footer from "@/components/property/dashboard/Footer";
 import SidebarDashboard from "@/components/property/dashboard/SidebarDashboard";
-import SearchDataTable from "@/components/property/dashboard/dashboard-saved-search/SearchDataTable";
+//import SearchDataTable from "@/components/property/dashboard/dashboard-saved-search/SearchDataTable";
 
 export const metadata = {
   title: "Dashboard Saved Search || Homez - Real Estate NextJS Template",
@@ -50,9 +50,9 @@ const DashboardSavedSearch = () => {
               <div className="row">
                 <div className="col-xl-12">
                   <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
-                    <div className="packages_table table-responsive">
+                    {/* <div className="packages_table table-responsive">
                       <SearchDataTable />
-                    </div>
+                    </div> */}
                     <div className="mt30">
                       <Pagination />
                     </div>
