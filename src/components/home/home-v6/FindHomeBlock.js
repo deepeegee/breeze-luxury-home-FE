@@ -3,30 +3,35 @@ import React from "react";
 const FindHomeBlock = () => {
   const blocks = [
     {
-      icon: "flaticon-search-1",
+      icon: "flaticon-search-1", // swap to a shield/security icon if you have one
       number: "01",
-      subtitle: "Search Your Dream Home",
-      text: "Get ready to launch your real estate website without...",
+      subtitle: "Verified & Secure Properties",
+      text:
+        "Every property we offer is thoroughly vetted, legally verified, and free from disputes or government encumbrances — giving you complete peace of mind.",
     },
     {
-      icon: "flaticon-chat",
+      icon: "flaticon-chat", // swap to a law/scale icon if available
       number: "02",
-      subtitle: "Choose The House You Like",
-      text: "Get ready to launch your real estate website without...",
+      subtitle: "Expert Legal & Market Insight",
+      text:
+        "With a strong background in property law and real estate, we ensure every transaction is transparent, compliant, and professionally handled.",
     },
     {
-      icon: "flaticon-bird-house",
+      icon: "flaticon-bird-house", // swap to a growth/chart icon if available
       number: "03",
-      subtitle: "Enquire About This Property",
-      text: "Get ready to launch your real estate website without...",
+      subtitle: "Tailored Investment Advisory",
+      text:
+        "We don’t just sell properties — we guide you with expert advice, portfolio management, and strategies that maximize returns on your investment.",
     },
     {
-      icon: "flaticon-house-1",
+      icon: "flaticon-house-1", // swap to a map/pin icon if available
       number: "04",
-      subtitle: "Own Your Home",
-      text: "Get ready to launch your real estate website without...",
+      subtitle: "Trusted Service, Nationwide Reach",
+      text:
+        "From Lagos to other major states in Nigeria, we provide reliable real estate solutions backed by integrity, professionalism, and a commitment to client satisfaction.",
     },
   ];
+  
 
   return (
     <>

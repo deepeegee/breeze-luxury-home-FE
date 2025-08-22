@@ -30,24 +30,23 @@ export default function Category() {
                 className="pt-card d-flex align-items-center p20 bdr1 bdrs12 bgc-f7 hover-bg-white"
                 aria-label={t.label}
               >
-                {/* ICON WRAPPER — stays neutral, never changes */}
-                <span className="icon-wrap">
+                <span className="icon-wrap" aria-hidden="true">
                   {t.iconImg ? (
                     <Image
                       src={t.iconImg}
-                      alt={t.label}
-                      width={20}
-                      height={20}
+                      alt=""
+                      width={22}
+                      height={22}
                       className="icon-img"
+                      priority={false}
                     />
                   ) : (
                     <i className={`icon ${t.icon}`} />
                   )}
                 </span>
 
-                {/* TEXT WRAPPER — hover only applies here */}
                 <div className="label-container">
-                  <div className="fw600 label-text">{t.label}</div>
+                  <div className="label-text">{t.label}</div>
                 </div>
               </Link>
             </div>
@@ -57,61 +56,94 @@ export default function Category() {
 
       <style jsx>{`
         :root {
-          --brand-color: var(--color-primary, var(--bs-primary, #0d6efd));
-          --icon-color: #1f2937;
+          --brand: var(--color-primary, var(--bs-primary, #0d6efd));
+          --ink: #0f172a;
+          --ink-muted: #475569;
+          --icon: #1f2937;
+          --chip-bg: #f1f5f9;
         }
 
-        .property-types-wrap {
-          margin-top: 24px;
-        }
+        .property-types-wrap { margin-top: 24px; }
 
-        .fw600 {
-          font-weight: 600;
-          font-size: 16px;
-          white-space: nowrap;
-          transition: color 0.2s ease;
-        }
-
+        /* Card base */
         .pt-card {
-          min-width: 220px;
-          transition: transform 180ms ease, box-shadow 180ms ease;
+          gap: 10px;
+          min-height: 48px;
+          padding: clamp(10px, 2.5vw, 16px); /* tighter on small, comfy on lg */
+          transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
         }
-
         .pt-card:hover {
           transform: translateY(-2px);
-          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.06);
           text-decoration: none;
         }
-
-        /* ✅ Only text changes color on hover */
-        :global(.pt-card:hover) .label-text {
-          color: var(--brand-color) !important;
+        /* Focus ring (keyboard) */
+        :global(.pt-card:focus-visible) {
+          outline: 0;
+          box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 30%, transparent);
         }
 
-        /* ✅ Icons stay unchanged */
+        /* Icon stays neutral */
         .icon-wrap {
-          width: 26px;
-          height: 26px;
-          border-radius: 50%;
+          width: clamp(26px, 5.8vw, 32px);
+          height: clamp(26px, 5.8vw, 32px);
+          border-radius: 999px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          background: #f1f5f9;
-          margin-right: 10px;
+          background: var(--chip-bg);
+          flex: 0 0 auto;
+        }
+        .icon { font-size: clamp(18px, 4.8vw, 22px); color: var(--icon); }
+        .icon-img { object-fit: contain; width: 100%; height: 100%; }
+
+        /* Text scales & wraps */
+        .label-container {
+          min-width: 0; /* allow text to shrink/wrap */
+          display: flex;
+          align-items: center;
+        }
+        .label-text {
+          font-weight: 600;
+          font-size: clamp(14px, 3.8vw, 16px);
+          line-height: 1.15;
+          color: var(--ink);
+          /* Desktop: single line ellipsis; Mobile: allow 2 lines */
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          -webkit-line-clamp: 1;
+          white-space: normal;
         }
 
-        .icon {
-          font-size: 20px;
-          color: var(--icon-color);
-          transition: none !important; /* No hover effects */
+        /* Only apply hover color on hover-capable devices */
+        @media (hover: hover) and (pointer: fine) {
+          :global(.pt-card:hover) .label-text { color: var(--brand) !important; }
         }
 
-        :global(.pt-card:hover) .icon {
-          color: var(--icon-color) !important;
+        /* ======= Responsive layout tweaks ======= */
+        /* XS phones: if width gets super tight (<360px), stack 1 per row */
+        @media (max-width: 360px) {
+          .property-types-wrap :global(.row > [class*="col-"]) {
+            flex: 0 0 100%;
+            max-width: 100%;
+          }
         }
 
-        .icon-img {
-          object-fit: contain;
+        /* Phones: let labels take two lines for long text */
+        @media (max-width: 576px) {
+          .label-text { -webkit-line-clamp: 2; }
+          .pt-card { gap: 8px; }
+        }
+
+        /* Tablets: comfy spacing, three in a row already via col-md-4 */
+        @media (min-width: 768px) and (max-width: 991.98px) {
+          .pt-card { padding: 14px; }
+        }
+
+        /* Reduce motion preference */
+        @media (prefers-reduced-motion: reduce) {
+          .pt-card { transition: none; }
         }
       `}</style>
     </div>

@@ -3,14 +3,16 @@ import React from "react";
 const ContactMeta = () => {
   const contactInfoList = [
     {
-      title: "Total Free Customer Care",
-      phone: "+(0) 123 050 945 02",
-      phoneLink: "tel:+012305094502", // Changed phoneLink to tel: URI
+      id: 1,
+      title: "7, Rasaki Balogun Street, Atlantic View Estate, Off Alpha Beach Road, Lekki Peninsula, Lagos, Nigeria",
+      phone: "0814 882 7901",
+      phoneHref: "tel:+2348148827901", // Updated phoneHref to use "tel" URI
     },
     {
+      id: 2,
       title: "Need Live Support?",
-          mail: "info@breezeluxuryhomes.com",
-    mailLink: "mailto:info@breezeluxuryhomes.com", // Changed mailLink to direct email address
+      email: "info@breezeluxuryhomes.com",
+      emailHref: "mailto:info@breezeluxuryhomes.com", 
     },
   ];
 

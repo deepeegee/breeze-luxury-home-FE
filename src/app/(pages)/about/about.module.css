@@ -1,0 +1,128 @@
+/* ---------- Breadcrumb (no theme background, tight spacing) ---------- */
+.breadcrumbSection {
+    padding: 12px 0 0;     /* small top padding; no bottom padding */
+    margin: 0;             /* remove any section margin */
+  }
+  
+  .breadcrumb {
+    margin: 0;             /* kill theme margin */
+    padding: 0;            /* kill theme padding */
+  }
+  
+  .breadcrumbNav {
+    margin-top: 2px;
+  }
+  
+  .breadcrumbList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 4px;       /* tight */
+    font-size: clamp(12px, 2.6vw, 14px);
+    opacity: .9;
+  }
+  .breadcrumbList li::after { content: "›"; margin: 0 6px; opacity: .6; }
+  .breadcrumbList li:last-child::after { content: ""; }
+  
+  .breadcrumbTitle {
+    font-size: clamp(22px, 4.2vw, 36px);
+    line-height: 1.15;
+    margin: 4px 0 4px;       /* no bottom margin to avoid gap */
+  }
+  
+  /* ---------- About section spacing ---------- */
+  .aboutSection {
+    margin-top: 10px;         /* sits close to breadcrumb */
+    padding-top: 10px;     /* reduce/start subtle spacing; set to 0 if you want it flush */
+  }
+  
+  /* ---------- Typography & rhythm ---------- */
+  .subtitle {
+    font-size: clamp(14px, 2.6vw, 16px);
+    letter-spacing: .2px;
+    margin: 18px 0 8px;
+  }
+  
+  .paragraph {
+    margin: 0 0 14px;
+    line-height: 1.7;
+    max-width: 72ch;
+  }
+  
+  /* ---------- Layout grid ---------- 
+     Mobile: main then side
+     Desktop: main | side
+  */
+  .aboutGrid {
+    display: grid;
+    gap: 22px;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "main"
+      "side";
+    align-items: start;
+  }
+  .main { grid-area: main; }
+  .side {
+    grid-area: side;
+    display: grid;
+    gap: 14px;
+    align-content: start;
+  }
+  
+  @media (min-width: 992px) {
+    .aboutGrid {
+      grid-template-columns: 2fr 1fr;
+      grid-template-areas: "main side";
+      gap: 32px 48px;
+    }
+  }
+  
+  /* ---------- Lists with custom bullets ---------- */
+  .list {
+    padding-left: 0;
+    list-style: none;
+    margin: 0 0 14px;
+  }
+  .list li {
+    position: relative;
+    padding-left: 1.25rem;
+    margin: 6px 0;
+    line-height: 1.6;
+  }
+  .list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--bs-primary, #0d6efd);
+    box-shadow: 0 0 0 2px rgba(13,110,253,.15);
+    transform: translateY(-50%);
+  }
+  
+  /* Two-column split list for expertise on wider screens */
+  .listSplit {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px 18px;
+  }
+  @media (min-width: 576px) {
+    .listSplit { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--bs-light, #f6f7fb);
+    border: 1px solid rgba(0,0,0,.06);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  
+  /* ---------- Utilities ---------- */
+  .mt40 { margin-top: 40px; }
+  

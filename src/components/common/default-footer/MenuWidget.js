@@ -1,36 +1,37 @@
 import React from "react";
+import Link from "next/link";
+
+const POPULAR_SEARCH = [
+  "Apartments for Rent",
+  "Houses for Sale",
+  "Land for Sale",
+];
+
+const CITIES = ["Lekki", "Ikoyi", "Victoria Island", "Ikeja", "Yaba"];
 
 const MenuWidget = () => {
   const menuSections = [
     {
       title: "Popular Search",
-      links: [
-        { label: "Apartment for Rent", href: "#" },
-        { label: "Apartment Low to Hide", href: "#" },
-        { label: "Offices for Buy", href: "#" },
-        { label: "Offices for Rent", href: "#" },
-      ],
+      links: POPULAR_SEARCH.map((label) => ({ label, href: "/grid-full-3-col" })),
     },
     {
       title: "Quick Links",
       links: [
-        { label: "Terms of Use", href: "#" },
-        { label: "Privacy Policy", href: "#" },
-        { label: "Pricing Plans", href: "#" },
-        { label: "Our Services", href: "#" },
-        { label: "Contact Support", href: "#" },
-        { label: "Careers", href: "#" },
-        { label: "FAQs", href: "#" },
+        { label: "About Us", href: "/about" },
+        { label: "Blog", href: "/blog" },
+        { label: "Contact", href: "/contact" },
+        { label: "Terms of Use", href: "/legal/terms" },
+        { label: "Privacy Policy", href: "/legal/privacy" },
       ],
     },
     {
       title: "Discover",
-      links: [
-        { label: "Miami", href: "#" },
-        { label: "Los Angeles", href: "#" },
-        { label: "Chicago", href: "#" },
-        { label: "New York", href: "#" },
-      ],
+      // city links pass a location param into the grid page
+      links: CITIES.map((name) => ({
+        label: name,
+        href: `/grid-full-3-col?location=${encodeURIComponent(name)}`,
+      })),
     },
   ];
 
@@ -43,7 +44,9 @@ const MenuWidget = () => {
             <ul className="ps-0">
               {section.links.map((link, linkIndex) => (
                 <li key={linkIndex}>
-                  <a href={link.href}>{link.label}</a>
+                  <Link href={link.href} aria-label={link.label}>
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>

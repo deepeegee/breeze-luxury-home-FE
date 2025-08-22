@@ -1,0 +1,88 @@
+/* Mobile-first hero background */
+.mobileHeroSection {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100dvh; /* Better mobile support */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  
+  .mobileHeroContainer {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    min-height: inherit;
+  }
+  
+  /* Tablet */
+  @media (min-width: 768px) {
+    .mobileHeroSection {
+      min-height: 85vh;
+    }
+  }
+  
+  /* Desktop - let original theme take over */
+  @media (min-width: 1200px) {
+    .mobileHeroSection {
+      min-height: auto;
+    }
+    .mobileHeroContainer {
+      display: block;
+      align-items: initial;
+      min-height: auto;
+    }
+  }
+  
+  
+  .whyLead {
+    margin: 8px 0 14px;
+    line-height: 1.7;
+    max-width: 72ch;
+  }
+  
+  /* custom bullets + responsive 2-col list */
+  .whyList {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 14px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px 20px;
+  }
+  .whyList li {
+    position: relative;
+    padding-left: 1.6rem;
+    line-height: 1.6;
+  }
+  .whyList li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.9em;
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--bs-primary, #0d6efd);
+    box-shadow: 0 0 0 3px rgba(13,110,253,.15);
+    transform: translateY(-50%);
+  }
+  .whyList li > strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+  
+  @media (min-width: 576px) {
+    .whyList {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  
+  /* CTA row */
+  .whyCtas {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  

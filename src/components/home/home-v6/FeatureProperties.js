@@ -58,8 +58,7 @@ export default function FeatureProperties() {
   if (!properties.length) {
     return (
       <div className="text-center py-5">
-        <h4>No Featured Properties Available</h4>
-        <p>Please check back later or contact support if this persists.</p>
+        <p>No Featured Properties Available</p>
       </div>
     );
   }

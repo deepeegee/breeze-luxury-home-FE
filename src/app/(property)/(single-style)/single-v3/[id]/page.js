@@ -165,7 +165,7 @@ const SingleV3 = () => {
             <div className="col-auto">
               <div className="main-title">
                 <h2>Featured Properties</h2>
-                <p className="paragraph">Aliquam lacinia diam quis lacus euismod</p>
+                <p className="paragraph">Properties for sell and rent</p>
               </div>
             </div>
             <div className="home6-listing-single-slider" data-aos="fade-up">

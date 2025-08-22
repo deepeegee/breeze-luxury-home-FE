@@ -32,7 +32,7 @@ const About = () => {
                 ))}
               </ul>
             </div>
-            <Link href={`/single-v3/1`} className="ud-btn btn-white2">
+            <Link href={`/about`} className="ud-btn btn-white2">
               Learn More<i className="fal fa-arrow-right-long"></i>
             </Link>
           </div>
@@ -44,27 +44,18 @@ const About = () => {
             <div className="img-box-1 list-inline-item me-0">
               <Image
                 width={270}
-                height={350}
+                height={250}
                 className="img-1"
-                src="/images/about/about-1.jpg"
+                src="/images/about/about-1.jpeg"
                 alt="about"
               />
             </div>
             <div className="img-box-2 list-inline-item me-0">
               <Image
-                width={370}
-                height={520}
+                width={270}
+                height={420}
                 className="img-1"
-                src="/images/about/about-2.jpg"
-                alt="about"
-              />
-            </div>
-            <div className="img-box-3">
-              <Image
-                width={276}
-                height={146}
-                className="img-1 bounce-y"
-                src="/images/about/about-1.png"
+                src="/images/about/about-2.jpeg"
                 alt="about"
               />
             </div>

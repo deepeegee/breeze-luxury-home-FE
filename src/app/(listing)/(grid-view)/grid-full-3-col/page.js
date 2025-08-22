@@ -18,13 +18,7 @@ const GridFull3Col = () => {
     <>
       {/* Main Header Nav */}
       <DefaultHeader />
-      {/* End Main Header Nav */}
-
-      {/* Mobile Nav  */}
       <MobileMenu />
-      {/* End Mobile Nav  */}
-
-      {/* Breadcumb Sections */}
       <section className="breadcumb-section bgc-f7">
         <div className="container">
           <div className="row">
@@ -45,9 +39,6 @@ const GridFull3Col = () => {
           </div>
         </div>
       </section>
-      {/* End Breadcumb Sections */}
-
-      {/* Property Filtering */}
       <Suspense
         fallback={
           <section className="pt60 pb90 bgc-f7">
@@ -59,9 +50,6 @@ const GridFull3Col = () => {
       >
         <ProperteyFiltering />
       </Suspense>
-      {/* Property Filtering */}
-
-      {/* Start Our Footer */}
       <section className="footer-style1 pt60 pb-0">
         <Footer />
       </section>
