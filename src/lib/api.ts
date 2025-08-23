@@ -1,3 +1,8 @@
+'use client';
+
+/* ===========================================================
+   Types you already had
+=========================================================== */
 export type Listing = {
   id: number | string;
   image: string | null;
@@ -169,33 +174,84 @@ export type PropertyBE = {
   structureType?: string;
 };
 
+/* ===========================================================
+   Extra Blog types for new endpoints (non-breaking)
+=========================================================== */
+export type BlogAuthor = {
+  id: string | number;
+  username?: string;
+  displayName?: string;
+  avatarUrl?: string | null;
+};
+
+export type BlogBE = {
+  id?: string | number;
+  _id?: string;
+  slug?: string;
+  title: string;
+  description: string;                 // final HTML from BE (should have real URLs)
+  tags?: string[];
+  headerImageUrl?: string | null;
+  published?: boolean;
+  publishedAt?: string | null;
+  readTime?: number | null;
+  author?: BlogAuthor | string | null;
+  assets?: {
+    header?: {
+      url: string;
+      width?: number;
+      height?: number;
+      contentType?: string;
+      sizeBytes?: number;
+    } | null;
+    inline?: {
+      localId?: string | null;
+      url: string;
+      alt?: string | null;
+      contentType?: string | null;
+      width?: number | null;
+      height?: number | null;
+      sizeBytes?: number | null;
+    }[];
+  };
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type BlogPost = {
+  id: string | number;
+  slug?: string;
+  title: string;
+  description: string; // HTML
+  tags: string[];
+  headerImageUrl?: string | null;
+  published: boolean;
+  publishedAt?: string | null;
+  readTime?: number | null;
+  author?: BlogAuthor | null;
+  assets?: BlogBE['assets'];
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+/* ===========================================================
+   Base + shared helpers
+=========================================================== */
 const API_BASE = "/api";
 
-/* ========================
-   Shared helpers
-======================== */
 async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${path}`;
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   Object.assign(headers, (init.headers as Record<string, string>) || {});
 
-  console.log(`API Request to: ${url}`, { headers, method: init.method || "GET" });
-
   const res = await fetch(url, { credentials: "include", headers, ...init });
-
-  console.log(`API Response from: ${url}`, {
-    status: res.status,
-    ok: res.ok,
-    statusText: res.statusText,
-  });
 
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
     try {
       const err = await res.json();
       msg = err?.message || JSON.stringify(err);
-    } catch (parseErr) {
-      console.error("Failed to parse error response:", parseErr);
+    } catch {
       try {
         const textResponse = await res.text();
         msg = `HTTP ${res.status}: ${textResponse || res.statusText}`;
@@ -203,18 +259,16 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
         msg = `HTTP ${res.status}: ${res.statusText}`;
       }
     }
-    console.error("API Error:", { status: res.status, message: msg, url });
     throw new Error(msg);
   }
 
-  // treat 204/empty body as empty object
   const contentType = res.headers.get('content-type') || '';
   const contentLength = res.headers.get('content-length');
+
   if (res.status === 204 || contentLength === '0' || !contentType.includes('application/json')) {
     try {
       const text = await res.text();
       if (!text || !text.trim()) return {} as T;
-      // if server returned text/json-like, try parse
       return JSON.parse(text) as T;
     } catch {
       return {} as T;
@@ -223,29 +277,20 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   try {
     const data = await res.json();
-    console.log(`API Response data from: ${url}`, data);
     return data as T;
-  } catch (parseErr) {
-    console.error("Failed to parse JSON response:", parseErr);
-    try {
-      const textResponse = await res.text();
-      console.log("Response as text:", textResponse);
-      if (textResponse.trim() === "") return {} as T;
-      throw new Error(`Invalid JSON response: ${textResponse}`);
-    } catch {
-      throw new Error("Failed to parse response as JSON or text");
-    }
+  } catch {
+    const textResponse = await res.text();
+    if (textResponse.trim() === "") return {} as T;
+    throw new Error(`Invalid JSON response: ${textResponse}`);
   }
 }
 
-async function apiFetchForm<T>(path: string, form: FormData): Promise<T> {
+async function apiFetchForm<T>(path: string, form: FormData, method: 'POST' | 'PATCH' = 'POST'): Promise<T> {
   const url = `${API_BASE}${path}`;
-  const headers: Record<string, string> = {};
   const res = await fetch(url, {
-    method: "POST",
+    method,
     credentials: "include",
-    headers,
-    body: form,
+    body: form, // Important: let the browser set multipart boundary
   });
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
@@ -263,9 +308,13 @@ function toQueryString(params?: Record<string, any>): string {
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (v == null) continue;
-    const s = typeof v === "string" ? v.trim() : String(v);
-    if (!s || s === "undefined" || s === "null") continue;
-    qs.append(k, s);
+    if (Array.isArray(v)) {
+      v.forEach(x => x != null && qs.append(k, String(x)));
+    } else {
+      const s = typeof v === "string" ? v.trim() : String(v);
+      if (!s || s === "undefined" || s === "null") continue;
+      qs.append(k, s);
+    }
   }
   const out = qs.toString();
   return out ? `?${out}` : "";
@@ -293,7 +342,6 @@ function normalizePhotos(input?: PhotoBE[]): { url: string }[] | undefined {
    Mapper (BE -> FE)
 ======================== */
 function toListing(p: PropertyBE): Listing {
-  // pick the first valid photo; don’t depend on isFeatured
   const hero =
     (Array.isArray(p.photos) ? p.photos.find((ph) => ph?.url) : undefined) ??
     (Array.isArray(p.photos) ? p.photos[0] : undefined);
@@ -369,7 +417,7 @@ function toListing(p: PropertyBE): Listing {
     availability,
     listedIn: clean(p.listedIn),
     status: clean(p.status),
-    featured: typeof p.isFeatured === "boolean" ? p.isFeatured : false, // legacy only
+    featured: typeof p.isFeatured === "boolean" ? p.isFeatured : false,
 
     amenities: p.amenities,
     tags: p.amenities,
@@ -395,9 +443,9 @@ function toListing(p: PropertyBE): Listing {
   return mapped;
 }
 
-/* =======================
+/* ===========================================================
    AUTH / ADMIN (exports)
-======================= */
+=========================================================== */
 export function login(email: string, password: string) {
   return apiFetch<{ token?: string; user?: any }>(`/auth/login`, {
     method: "POST",
@@ -421,20 +469,18 @@ export function getAdminMe() {
   return apiFetch<{ id: string | number; name: string; email: string }>(`/admins/me`);
 }
 
-/* =======================
+/* ===========================================================
    PROPERTIES (exports)
-======================= */
+=========================================================== */
 export function getListings(params?: Record<string, any>) {
   const qs = toQueryString(params);
   return apiFetch<PropertyBE[]>(`/properties${qs}`).then((list) => list.map(toListing));
 }
 
-// ✅ single property (e.g. http://localhost:4000/properties/:id)
 export function getListing(id: string | number) {
   return apiFetch<PropertyBE>(`/properties/${id}`).then(toListing);
 }
 
-// ✅ views: GET count (supports number | {count} | {views} | {data:{count}})
 export async function getPropertyViews(id: string | number): Promise<number | null> {
   try {
     const res = await apiFetch<any>(`/properties/${id}/views`);
@@ -443,13 +489,11 @@ export async function getPropertyViews(id: string | number): Promise<number | nu
     if (res?.views != null) return Number(res.views);
     if (res?.data?.count != null) return Number(res.data.count);
     return null;
-  } catch (e) {
-    console.warn('getPropertyViews failed', e);
+  } catch {
     return null;
   }
 }
 
-// ✅ views: POST record (sendBeacon + keepalive)
 type ViewPingPayload = {
   route?: string;
   referrer?: string;
@@ -466,7 +510,7 @@ export async function recordPropertyView(id: string | number, meta: ViewPingPayl
       const blob = new Blob([body], { type: 'application/json' });
       (navigator as any).sendBeacon?.(`${API_BASE}${path}`, blob);
       return;
-    } catch { /* fallback to fetch */ }
+    } catch {}
   }
 
   try {
@@ -477,9 +521,7 @@ export async function recordPropertyView(id: string | number, meta: ViewPingPayl
       keepalive: true,
       body,
     });
-  } catch (err) {
-    console.warn('recordPropertyView failed', err);
-  }
+  } catch {}
 }
 
 export function createListing(payload: PropertyBE) {
@@ -525,11 +567,86 @@ export function uploadListingPhoto(file: File) {
   });
 }
 
-/* =======================
-   BLOGS / TESTIMONIALS
-======================= */
-export const getBlogs = (params?: Record<string, any>) => Promise.resolve([] as Blog[]);
-export const getBlog = (id: string | number) => Promise.resolve(null as Blog | null);
+/* ===========================================================
+   BLOGS — Public + Admin + Create/Delete
+=========================================================== */
+
+// Internal: map BE -> FE BlogPost
+function toBlog(b: BlogBE): BlogPost {
+  const id = (b as any)?._id ?? b?.id ?? '';
+  const author =
+    b?.author && typeof b.author === 'object'
+      ? (b.author as BlogAuthor)
+      : b?.author
+      ? { id: b.author as any }
+      : null;
+
+  return {
+    id,
+    slug: b?.slug,
+    title: String(b?.title ?? '').replace(/^"(.*)"$/, '$1').trim(),
+    description: String(b?.description ?? ''),
+    tags: Array.isArray(b?.tags) ? b!.tags! : [],
+    headerImageUrl: b?.headerImageUrl ?? null,
+    published: !!b?.published,
+    publishedAt: b?.publishedAt ?? null,
+    readTime: b?.readTime ?? null,
+    author,
+    assets: b?.assets,
+    createdAt: b?.createdAt,
+    updatedAt: b?.updatedAt,
+  };
+}
+
+/* ----- Public reads ----- */
+export async function getBlogs(params?: Record<string, any>): Promise<BlogPost[]> {
+  const qs = toQueryString(params);
+  const res = await apiFetch<any>(`/blogs${qs}`);
+  const list = (res?.data ?? res ?? []) as BlogBE[];
+  return Array.isArray(list) ? list.map(toBlog) : [];
+}
+
+export async function getBlog(idOrSlug: string | number): Promise<BlogPost | null> {
+  const res = await apiFetch<any>(`/blogs/${idOrSlug}`);
+  const data = (res?.data ?? res ?? null) as BlogBE | null;
+  return data ? toBlog(data) : null;
+}
+
+/* ----- Admin reads ----- */
+export async function adminGetBlogs(params?: Record<string, any>): Promise<BlogPost[]> {
+  const qs = toQueryString(params);
+  const res = await apiFetch<any>(`/admins/posts${qs}`);
+  const list = (res?.data ?? res ?? []) as BlogBE[];
+  return Array.isArray(list) ? list.map(toBlog) : [];
+}
+
+export async function adminGetBlog(id: string | number): Promise<BlogPost | null> {
+  const res = await apiFetch<any>(`/admins/posts/${id}`);
+  const data = (res?.data ?? res ?? null) as BlogBE | null;
+  return data ? toBlog(data) : null;
+}
+
+/* ----- Admin create (multipart) ----- */
+/** Create blog (admin). Expects FormData with:
+ *  - title, description (HTML), published ("true"/"false")
+ *  - optional headerImage (File)
+ *  - optional tags[] (repeated)
+ *  - optional images[] (Files) + imageLocalIds[] (strings; same order)
+ */
+export async function createBlog(form: FormData): Promise<BlogPost> {
+  const res = await apiFetchForm<any>(`/admins/posts`, form, 'POST');
+  const data = (res?.data ?? res) as BlogBE;
+  return toBlog(data);
+}
+
+/* ----- Admin delete ----- */
+export async function deleteBlog(id: string | number): Promise<void> {
+  await apiFetch<any>(`/admins/posts/${id}`, { method: 'DELETE' });
+}
+
+/* ===========================================================
+   TESTIMONIALS & CITIES (stubs retained)
+=========================================================== */
 export const getTestimonials = () => Promise.resolve([] as Testimonial[]);
 export const getCities = () =>
   Promise.resolve([] as { id: number; name: string; image: string; count: number }[]);

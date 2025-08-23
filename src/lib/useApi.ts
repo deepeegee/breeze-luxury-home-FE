@@ -4,38 +4,40 @@ import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 
 import {
-  // Properties
+  /* Properties */
   getListings,
   getListing,
   createListing,
   updateListing,
   deleteListing,
   uploadListingPhoto,
-  getPropertyViews,        // ✅
-  recordPropertyView,      // ✅
+  getPropertyViews,
+  recordPropertyView,
 
-  // Blogs
+  /* Blogs (PUBLIC + ADMIN + MUTATIONS) */
   getBlogs,
   getBlog,
+  adminGetBlogs,
+  adminGetBlog,
+  createBlog,
+  deleteBlog,
 
-  // Testimonials
+  /* Testimonials / Cities */
   getTestimonials,
-
-  // Cities
   getCities,
 
-  // Auth/Admin
+  /* Auth/Admin */
   login,
   registerAdmin,
   getAdminMe,
 
-  // types
-  Listing,
-  Blog,
-  Testimonial,
-  PropertyBE,
-} from './api';
+  /* types from api.ts */
+  type Listing,
+  type PropertyBE,
+  type BlogPost,
+} from '@/lib/api';
 
+/* small adapter to normalize SWR return shape */
 function adapt<T>(swr: any, fallback: T) {
   return {
     data: (swr?.data ?? fallback) as T,
@@ -55,25 +57,21 @@ export function useListings(params?: Record<string, any>) {
   return adapt<Listing[]>(swr, []);
 }
 
-// ✅ single-property endpoint directly
 export function useListing(id?: string | number) {
-  const key = id != null ? (['property', id] as const) : null;
+  const key = id != null ? (['property', String(id)] as const) : null;
   const swr = useSWR(key, () => getListing(id as string | number));
   return adapt<Listing | null>(swr, null);
 }
 
-// ✅ optional: read current view count
 export function usePropertyViews(id?: string | number) {
-  const key = id != null ? (['property-views', id] as const) : null;
+  const key = id != null ? (['property-views', String(id)] as const) : null;
   const swr = useSWR<number | null>(key, () => getPropertyViews(id as string | number));
   return adapt<number | null>(swr, null);
 }
 
-// ✅ optional: total view count across current listings set
 export function useTotalPropertyViews() {
   const { data: listings } = useListings();
 
-  // recompute only when the set of ids changes
   const idsKey =
     Array.isArray(listings) && listings.length
       ? listings.map((p) => String(p.id)).sort().join(',')
@@ -105,7 +103,6 @@ export function useTotalPropertyViews() {
   };
 }
 
-// ✅ optional: trigger recording from components
 export function useRecordPropertyView() {
   return useSWRMutation<void, any, [string], { id: string | number; meta?: any }>(
     ['record-property-view'],
@@ -144,19 +141,56 @@ export function useUploadListingPhoto() {
 }
 
 /* =========
-   Blogs
+   Blogs (Public)
 ========= */
 
 export function useBlogs(params?: Record<string, any>) {
   const key = params ? (['blogs', JSON.stringify(params)] as const) : (['blogs'] as const);
   const swr = useSWR(key, () => getBlogs(params));
-  return adapt<Blog[]>(swr, []);
+  return adapt<BlogPost[]>(swr, []);
 }
 
-export function useBlog(id?: string | number) {
-  const key = id != null ? (['blog', id] as const) : null;
-  const swr = useSWR(key, () => getBlog(id as string | number));
-  return adapt<Blog | null>(swr, null);
+export function useBlog(idOrSlug?: string | number) {
+  const key = idOrSlug != null ? (['blog', String(idOrSlug)] as const) : null;
+  const swr = useSWR(key, () => getBlog(idOrSlug as string | number));
+  return adapt<BlogPost | null>(swr, null);
+}
+
+/* =========
+   Blogs (Admin)
+========= */
+
+export function useAdminBlogs(params?: Record<string, any>) {
+  const key = params ? (['admin-blogs', JSON.stringify(params)] as const) : (['admin-blogs'] as const);
+  const swr = useSWR(key, () => adminGetBlogs(params));
+  return adapt<BlogPost[]>(swr, []);
+}
+
+export function useAdminBlog(id?: string | number) {
+  const key = id != null ? (['admin-blog', String(id)] as const) : null;
+  const swr = useSWR(key, () => adminGetBlog(id as string | number));
+  return adapt<BlogPost | null>(swr, null);
+}
+
+export function useCreateBlog() {
+  return useSWRMutation<BlogPost, any, [string], FormData>(
+    ['create-blog'],
+    async (_key, { arg }) => {
+      if (!(arg instanceof FormData)) throw new Error('useCreateBlog expects FormData as arg');
+      return createBlog(arg);
+    }
+  );
+}
+
+export function useDeleteBlog() {
+  return useSWRMutation<{ ok: true }, any, [string], string | number>(
+    ['delete-blog'],
+    async (_key, { arg }) => {
+      if (!arg) throw new Error('Missing blog id');
+      await deleteBlog(arg);
+      return { ok: true };
+    }
+  );
 }
 
 /* =================
@@ -165,7 +199,9 @@ export function useBlog(id?: string | number) {
 
 export function useTestimonials() {
   const swr = useSWR(['testimonials'] as const, () => getTestimonials());
-  return adapt<Testimonial[]>(swr, []);
+  return adapt<
+    { id: string | number; title: string; quote: string; stars: number; image: string; name: string; company: string }[]
+  >(swr, []);
 }
 
 /* =========

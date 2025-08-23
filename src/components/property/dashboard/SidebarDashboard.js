@@ -43,6 +43,11 @@ const SidebarDashboard = () => {
           icon: "flaticon-home",
           text: "My Properties",
         },
+        {
+          href: "/dashboard-add-blog",
+          icon: "flaticon-new-tab",
+          text: "Add New Blog",
+        },
       ],
     },
     {
