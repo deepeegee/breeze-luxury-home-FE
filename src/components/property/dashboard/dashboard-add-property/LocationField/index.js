@@ -2,6 +2,7 @@
 import React, { useMemo, useState } from "react";
 import SelectMulitField from "./SelectMulitField";
 
+/* ---------------------- Nearby editor ---------------------- */
 // Clean items before sending
 function cleanItems(arr) {
   return arr
@@ -28,18 +29,16 @@ function NearbyEditor() {
     );
 
   const add = () =>
-    setItems((prev) => [
-      ...prev,
-      { label: "", distance: "", category: "" },
-    ]);
+    setItems((prev) => [...prev, { label: "", distance: "", category: "" }]);
 
   const remove = (idx) =>
     setItems((prev) => prev.filter((_, i) => i !== idx));
 
   return (
     <div className="mt10">
-      {/* hidden field sent with the form */}
-      <input type="hidden" name="whatsNearby" value={json} readOnly />
+      {/* Hidden field sent with the form.
+          NOTE: name is NOW "nearby" to match BE (PropertyBE.nearby). */}
+      <input type="hidden" name="nearby" value={json} readOnly />
 
       <label className="heading-color ff-heading fw600 mb10">
         What’s Nearby (optional)
@@ -107,6 +106,7 @@ function NearbyEditor() {
   );
 }
 
+/* ---------------------- Location field ---------------------- */
 const LocationField = () => {
   return (
     <div className="form-style1">
@@ -114,25 +114,25 @@ const LocationField = () => {
       <input type="hidden" name="country" value="Nigeria" />
 
       <div className="row">
+        {/* Estate / Address */}
         <div className="col-sm-12">
           <div className="mb20">
             <label className="heading-color ff-heading fw600 mb10">
-              Address
+              Estate / Address
             </label>
             <input
               type="text"
               className="form-control"
-              placeholder="e.g., 5 Parkview Estate"
+              placeholder="e.g., Victoria Garden City"
               name="address"
               required
             />
           </div>
         </div>
 
-        {/* Nigeria-only State & City */}
-        <SelectMulitField />
 
-        <div className="col-sm-6 col-xl-4">
+
+        {/* <div className="col-sm-6 col-xl-4">
           <div className="mb20">
             <label className="heading-color ff-heading fw600 mb10">
               Zip / Postal Code
@@ -144,8 +144,9 @@ const LocationField = () => {
               name="zip"
             />
           </div>
-        </div>
+        </div> */}
 
+        {/* Neighborhood → this maps to BE 'city' */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
             <label className="heading-color ff-heading fw600 mb10">
@@ -154,11 +155,23 @@ const LocationField = () => {
             <input
               type="text"
               className="form-control"
-              placeholder="e.g., Ikoyi, Lekki Phase 1"
-              name="neighborhood"
+              placeholder="e.g., Lekki Phase 1"
+              name="city"  /* ← IMPORTANT: neighborhood goes into BE 'city' */
             />
           </div>
         </div>
+        {/* State selector (keep your component; hide LGA and treat city elsewhere) */}
+        {/* If your SelectMulitField supports props, use them; otherwise it will just ignore them */}
+        <SelectMulitField showState={true} showCity={false} showLga={false} />
+        {/* LGA is now redundant – keep commented in case you want it back */}
+        {/*
+        <div className="col-sm-6 col-xl-4">
+          <div className="mb20">
+            <label className="heading-color ff-heading fw600 mb10">LGA</label>
+            <input type="text" className="form-control" name="lga" placeholder="(unused)" disabled />
+          </div>
+        </div>
+        */}
 
         {/* What's Nearby */}
         <div className="col-12">

@@ -1,84 +1,87 @@
 "use client";
 
-import Image from "next/image";
-import React from "react";
-import { useTestimonials } from "@/lib/useApi";
-import Spinner from "@/components/common/Spinner";
+import React, { useState, useEffect } from "react";
+import styles from "./Testimonial.module.css"; // local scoped styles
 
 const Testimonial = () => {
-  const { data: apiTestimonials = [], isLoading, error } = useTestimonials();
-  
-  if (isLoading) return <Spinner />;
-  if (error) {
-    console.error("Testimonial error details:", error);
-    return <div>Error loading testimonials: {error.message}</div>;
-  }
-  if (!apiTestimonials.length) return <div>No testimonials found</div>;
-  
-  const testimonials = apiTestimonials.map(t => ({ 
-    id: String(t.id), 
-    imageSrc: t.image, 
-    text: t.quote, 
-    name: t.name, 
-    designation: t.company 
-  }));
+  const testimonials = [
+    {
+      id: "1st",
+      initials: "CA",
+      text:
+        "Buying property in Nigeria used to scare me, but Breeze Luxury Homes made the process completely stress-free. Every detail was handled with transparency, and I finally own my dream home without any legal worries.",
+      name: "Chinwe A.",
+      designation: "Lagos",
+    },
+    {
+      id: "2nd",
+      initials: "OI",
+      text:
+        "As a diaspora investor, I needed a company I could trust. Breeze Luxury Homes gave me clear legal guidance and solid investment advice. Today, my portfolio is growing steadily, and I have peace of mind.",
+      name: "Ose I.",
+      designation: "London",
+    },
+    {
+      id: "3rd",
+      initials: "KO",
+      text:
+        "Professionalism at its best! From property search to paperwork, everything was smooth and reliable. They don’t just sell houses; they build trust.",
+      name: "Kunle O.",
+      designation: "Abuja",
+    },
+    {
+      id: "4th",
+      initials: "SE",
+      text:
+        "I got more than a home — I got a secure investment. The team ensured every document was verified and guided me through every step. I recommend them to anyone serious about real estate in Nigeria.",
+      name: "Sarah E.",
+      designation: "Port Harcourt",
+    },
+    {
+      id: "5th",
+      initials: "DM",
+      text:
+        "Breeze Luxury Homes truly stands out. Their legal background gave me confidence, and their customer service was top-notch. I feel safe recommending them to family and friends.",
+      name: "David M.",
+      designation: "Lagos",
+    },
+  ];
+
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  // auto-switch every 7 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % testimonials.length);
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [testimonials.length]);
+
   return (
-    <>
-      <div className="tab-content" id="pills-tabContent">
-        {testimonials.map((testimonial) => (
-          <div
+    <div className={styles.wrapper}>
+      {/* Testimonial content */}
+      <div className={styles.content}>
+        <span className={styles.quote}>“</span>
+        <p className={styles.text}>{testimonials[activeIndex].text}</p>
+        <h6 className={styles.name}>{testimonials[activeIndex].name}</h6>
+        <p className={styles.design}>{testimonials[activeIndex].designation}</p>
+      </div>
+
+      {/* Circle initials switcher */}
+      <div className={styles.switcher}>
+        {testimonials.map((testimonial, idx) => (
+          <button
             key={testimonial.id}
-            className={`tab-pane fade ${
-              testimonial.id === "2nd" ? "show active" : ""
+            onClick={() => setActiveIndex(idx)}
+            className={`${styles.circle} ${
+              idx === activeIndex ? styles.active : ""
             }`}
-            id={`pills-${testimonial.id}`}
-            role="tabpanel"
-            aria-labelledby={`pills-${testimonial.id}-tab`}
           >
-            <div className="testi-content text-center">
-              <span className="icon fas fa-quote-left" />
-              <h4 className="testi-text">{testimonial.text}</h4>
-              <h6 className="name">{testimonial.name}</h6>
-              <p className="design">{testimonial.designation}</p>
-            </div>
-          </div>
+            {testimonial.initials}
+          </button>
         ))}
       </div>
-      {/* End tab-content */}
-      <div className="tab-list position-relative">
-        <ul
-          className="nav nav-pills justify-content-center"
-          id="pills-tab"
-          role="tablist"
-        >
-          {testimonials.map((testimonial) => (
-            <li className="nav-item" role="presentation" key={testimonial.id}>
-              <button
-                className={`nav-link ${
-                  testimonial.id === "1st" ? "ps-0" : ""
-                } ${testimonial.id === "2nd" ? "active" : ""} ${
-                  testimonial.id === "5th" ? "pe-0" : ""
-                }`}
-                id={`pills-${testimonial.id}-tab`}
-                data-bs-toggle="pill"
-                data-bs-target={`#pills-${testimonial.id}`}
-                type="button"
-                role="tab"
-                aria-controls={`pills-${testimonial.id}`}
-                aria-selected={testimonial.id === "2nd" ? "true" : "false"}
-              >
-                <Image
-                  width={70}
-                  height={71}
-                  src={testimonial.imageSrc}
-                  alt=""
-                />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </>
+    </div>
   );
 };
 

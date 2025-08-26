@@ -10,7 +10,6 @@ const ContactInfo = () => {
     },
     {
       id: 2,
-      title: "Need Live Support?",
       email: "info@breezeluxuryhomes.com",
       emailHref: "mailto:info@breezeluxuryhomes.com", 
     },

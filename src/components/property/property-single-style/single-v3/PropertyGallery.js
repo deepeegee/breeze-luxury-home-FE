@@ -1,25 +1,54 @@
 // src/components/property/property-single-style/single-v3/PropertyGallery.js
 "use client";
+
+import { useMemo, useState } from "react";
 import { Gallery, Item } from "react-photoswipe-gallery";
 import "photoswipe/dist/photoswipe.css";
-import Image from "next/image";
+import NextImage from "next/image";
 
-const MAIN_H = 520; // left image height and the right grid total height
-const MAX_CARDS = 6; // 1 main + 5 thumbs
-
-// Treat example.com as fake/demo and skip it
-const BAD_HOSTS = new Set(["example.com", "www.example.com"]);
-const goodUrl = (u) => {
-  if (typeof u !== "string" || !/^https?:\/\//i.test(u)) return false;
-  try { return !BAD_HOSTS.has(new URL(u).hostname); } catch { return false; }
-};
+const MAX_CARDS = 6;
+const isHttpUrl = (u) => typeof u === "string" && /^https?:\/\//i.test(u);
 
 export default function PropertyGallery({ property }) {
   if (!property) return null;
 
-  const urls = Array.isArray(property.photos)
-    ? property.photos.map(ph => ph?.url).filter(goodUrl)
-    : [];
+  const urls = useMemo(
+    () =>
+      Array.isArray(property?.photos)
+        ? property.photos.map((ph) => ph?.url).filter(isHttpUrl)
+        : [],
+    [property]
+  );
+
+  const [dims, setDims] = useState({});
+  const rememberSize = (url) => (e) => {
+    const w = e.currentTarget.naturalWidth;
+    const h = e.currentTarget.naturalHeight;
+    if (!w || !h) return;
+    setDims((prev) => (prev[url]?.w ? prev : { ...prev, [url]: { w, h } }));
+  };
+
+  // Function to get gallery dimensions (larger for PhotoSwipe)
+  const getGalleryDimensions = (url) => {
+    const originalDims = dims[url];
+    if (!originalDims) {
+      // Default large dimensions for gallery
+      return { w: 1920, h: 1280 };
+    }
+    
+    // Scale up the original dimensions while maintaining aspect ratio
+    const aspectRatio = originalDims.w / originalDims.h;
+    const minWidth = 1200;
+    
+    if (originalDims.w < minWidth) {
+      return {
+        w: minWidth,
+        h: Math.round(minWidth / aspectRatio)
+      };
+    }
+    
+    return originalDims;
+  };
 
   if (urls.length === 0) {
     return (
@@ -31,82 +60,187 @@ export default function PropertyGallery({ property }) {
 
   const main = urls[0];
   const restAll = urls.slice(1);
-  const restVisible = restAll.slice(0, MAX_CARDS - 1); // show at most 5 thumbs
+  const restVisible = restAll.slice(0, MAX_CARDS - 1);
   const moreCount = Math.max(0, restAll.length - restVisible.length);
 
   return (
-    <Gallery>
-      {/* Left: main image (fixed height) */}
-      <div className="col-sm-6">
-        <div className="gallery-left bdrs12 overflow-hidden">
-          <Item original={main} thumbnail={main} width={1600} height={1067}>
-            {({ ref, open }) => (
-              <Image
-                ref={ref}
-                onClick={open}
-                src={main}
-                alt={property?.title ? `${property.title} – main` : "Property main image"}
-                width={1200}
-                height={MAIN_H}
-                className="w-100 h-100 object-cover"
-                role="button"
-                priority
-              />
-            )}
-          </Item>
-        </div>
-      </div>
-
-      {/* Right: 3x2 grid that matches left height */}
-      <div className="col-sm-6">
-        <div className="thumb-grid">
-          {restVisible.map((src, i) => {
-            const isLastTile = i === restVisible.length - 1 && moreCount > 0;
-            return (
-              <div className="thumb bdrs12 overflow-hidden" key={`${src}-${i}`}>
-                <Item original={src} thumbnail={src} width={1600} height={1067}>
+    <Gallery options={{ wheelToZoom: true }}>
+      <div className="gallery-wrapper">
+        <div className="row g-3 g-lg-4 align-items-start">
+          {/* LEFT — reduced even further */}
+          <div className="col-lg-6">
+            <div className="left-wrap bdrs12 overflow-hidden">
+              {dims[main] ? (
+                <Item
+                  original={main}
+                  thumbnail={main}
+                  width={getGalleryDimensions(main).w}
+                  height={getGalleryDimensions(main).h}
+                >
                   {({ ref, open }) => (
-                    <div ref={ref} onClick={open} role="button" className="thumb-inner">
-                      <Image
-                        src={src}
-                        alt={property?.title ? `${property.title} – image ${i + 2}` : `Property image ${i + 2}`}
-                        width={800}
-                        height={800}
-                        className="w-100 h-100 object-cover"
+                    <div ref={ref} onClick={open} role="button" className="clickable">
+                      <NextImage
+                        src={main}
+                        alt={property?.title ? `${property.title} – main` : "Property main image"}
+                        width={dims[main].w}
+                        height={dims[main].h}
+                        sizes="(max-width: 991px) 100vw, 46vw"
+                        priority
+                        onLoad={rememberSize(main)}
+                        style={{ width: "100%", height: "auto", display: "block" }}
                       />
-                      {isLastTile && (
-                        <div className="thumb-overlay">
-                          <span>View more</span>
-                        </div>
-                      )}
                     </div>
                   )}
                 </Item>
-              </div>
-            );
-          })}
+              ) : (
+                <Item
+                  original={main}
+                  thumbnail={main}
+                  width={1920}
+                  height={1280}
+                >
+                  {({ ref, open }) => (
+                    <div ref={ref} onClick={open} role="button" className="clickable">
+                      <NextImage
+                        src={main}
+                        alt={property?.title ? `${property.title} – main` : "Property main image"}
+                        width={1600}
+                        height={1067}
+                        sizes="(max-width: 991px) 100vw, 46vw"
+                        priority
+                        onLoad={rememberSize(main)}
+                        style={{ width: "100%", height: "auto", display: "block" }}
+                      />
+                    </div>
+                  )}
+                </Item>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT — switched to 3-column grid for balance */}
+          <div className="col-lg-6">
+            <div className="thumb-grid">
+              {restVisible.map((src, i) => {
+                const d = dims[src];
+                const isLastTile = i === restVisible.length - 1 && moreCount > 0;
+
+                return (
+                  <div className="thumb bdrs12 overflow-hidden" key={`${src}-${i}`}>
+                    {d ? (
+                      <Item 
+                        original={src} 
+                        thumbnail={src} 
+                        width={getGalleryDimensions(src).w} 
+                        height={getGalleryDimensions(src).h}
+                      >
+                        {({ ref, open }) => (
+                          <div ref={ref} onClick={open} role="button" className="thumb-inner clickable">
+                            <NextImage
+                              src={src}
+                              alt={
+                                property?.title
+                                  ? `${property.title} – image ${i + 2}`
+                                  : `Property image ${i + 2}`
+                              }
+                              width={d.w}
+                              height={d.h}
+                              sizes="(max-width: 575px) 50vw, (max-width: 991px) 30vw, 14vw"
+                              onLoad={rememberSize(src)}
+                              style={{ width: "100%", height: "auto", display: "block" }}
+                            />
+                            {isLastTile && (
+                              <div className="thumb-overlay">
+                                <span>View more</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </Item>
+                    ) : (
+                      <Item 
+                        original={src} 
+                        thumbnail={src} 
+                        width={1920} 
+                        height={1280}
+                      >
+                        {({ ref, open }) => (
+                          <div ref={ref} onClick={open} role="button" className="thumb-inner clickable">
+                            <NextImage
+                              src={src}
+                              alt={
+                                property?.title
+                                  ? `${property.title} – image ${i + 2}`
+                                  : `Property image ${i + 2}`
+                              }
+                              width={1200}
+                              height={900}
+                              sizes="(max-width: 575px) 50vw, (max-width: 991px) 30vw, 14vw"
+                              onLoad={rememberSize(src)}
+                              style={{ width: "100%", height: "auto", display: "block" }}
+                            />
+                            {isLastTile && (
+                              <div className="thumb-overlay">
+                                <span>View more</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </Item>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
       <style jsx>{`
-        .gallery-left {
-          height: ${MAIN_H}px;
+        /* Shrink entire gallery block and center it */
+        .gallery-wrapper {
+          max-width: 900px;
+          margin: 0 auto;
         }
+
+        .left-wrap {
+          background: #f3f4f6;
+          border-radius: 12px;
+        }
+
+        .clickable {
+          cursor: zoom-in;
+        }
+
+        /* 3-column thumbnails for lighter look */
         .thumb-grid {
-          height: ${MAIN_H}px;
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          grid-template-rows: repeat(2, 1fr);
           gap: 10px;
         }
-        .thumb { position: relative; }
-        .thumb-inner, .thumb :global(img) { width: 100%; height: 100%; }
-        .object-cover { object-fit: cover; }
+
+        .thumb {
+          background: #f3f4f6;
+          border-radius: 12px;
+        }
+
+        .thumb-inner {
+          position: relative;
+        }
+
+        /* Keep aspect ratio everywhere */
+        .left-wrap :global(img),
+        .thumb-inner :global(img) {
+          width: 100%;
+          height: auto;
+          display: block;
+          object-fit: contain;
+        }
 
         .thumb-overlay {
           position: absolute;
           inset: 0;
-          background: rgba(0,0,0,0.55);
+          background: rgba(0, 0, 0, 0.55);
           display: grid;
           place-items: center;
           color: #fff;
@@ -114,6 +248,22 @@ export default function PropertyGallery({ property }) {
           text-transform: uppercase;
           letter-spacing: 0.5px;
           font-size: 14px;
+        }
+
+        @media (max-width: 991.98px) {
+          .gallery-wrapper {
+            max-width: 100%;
+          }
+          .thumb-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        @media (max-width: 575.98px) {
+          .thumb-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+          }
         }
       `}</style>
     </Gallery>

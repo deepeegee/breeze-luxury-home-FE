@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,7 +12,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-/* ---------- helpers ---------- */
+/* ---------- helpers (same as grid) ---------- */
 const pickId = (listing) => {
   let possibleId =
     listing?.id ??
@@ -36,23 +37,25 @@ const pickId = (listing) => {
 };
 
 function deriveAvailability(p = {}) {
-  const raw = (
-    p.availability ||
-    p.status ||
-    p.listedIn ||
-    ""
-  ).toString().toLowerCase();
-
+  const raw = (p.availability || p.status || p.listedIn || "").toString().toLowerCase();
   if (raw.includes("sold")) return "Sold";
-  if (raw.includes("available") || raw.includes("active") || raw.includes("publish"))
-    return "For sale";
+  if (raw.includes("available") || raw.includes("active") || raw.includes("publish")) return "For sale";
   return "For sale";
 }
+
+/* pretty-case for labels (same as grid) */
+const pretty = (s) =>
+  (s ?? "")
+    .toString()
+    .trim()
+    .replace(/[_\-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\b\w/g, (m) => m.toUpperCase());
 
 export default function FeatureProperties() {
   const { data: allProperties = [], isLoading, error } = useListings();
   const properties = allProperties.filter((p) => p.featured === true);
-  
+
   if (isLoading) return <Spinner />;
   if (error) return <div>Error loading properties: {error.message}</div>;
   if (!properties.length) {
@@ -86,106 +89,191 @@ export default function FeatureProperties() {
           1200: { slidesPerView: 2, spaceBetween: 30 },
         }}
       >
-        {properties.slice(0, 6).map((property, idx) => {
-          const id = pickId(property);
-          const key = id
-            ? `feature-${id}-${idx}`
-            : `noid-${property?.city ?? "city"}-${property?.title ?? "title"}-${idx}`;
+        {properties.slice(0, 6).map((listing, idx) => {
+          const id = pickId(listing);
+          const key =
+            id != null
+              ? `listing-${String(id)}-${idx}`
+              : `noid-${listing?.city ?? "city"}-${listing?.title ?? "title"}-${idx}`;
 
-          const availability = deriveAvailability(property);
+          const availability = deriveAvailability(listing);
           const isSold = availability === "Sold";
 
-          const showBed = Number.isFinite(property?.bed);
-          const showBath = Number.isFinite(property?.bath);
-          const showSqft = Number.isFinite(property?.sqft);
+          const showBed = Number.isFinite(listing?.bed);
+          const showBath = Number.isFinite(listing?.bath);
+          const showSqft = Number.isFinite(listing?.sqft);
+
+          const propertyType =
+            (listing?.propertyType && pretty(listing.propertyType)) ||
+            (listing?.category && pretty(listing.category)) ||
+            "";
+
+          const propertyName = listing?.name ? pretty(listing.name) : "";
 
           return (
             <SwiperSlide key={key}>
-              <div
-                className={`listing-style1 ${isSold ? "is-sold" : "is-sale"} card-fixed`}
-              >
-                {id && (
-                  <Link
-                    href={`/single-v3/${encodeURIComponent(String(id))}`}
-                    className="stretched"
-                    aria-label={`Open ${property?.title ?? "property"}`}
-                    prefetch={false}
-                  >
-                    <span aria-hidden="true" />
-                  </Link>
-                )}
+              {id ? (
+                <Link
+                  href={`/single-v3/${encodeURIComponent(String(id))}`}
+                  className="card-link"
+                  aria-label={`Open ${listing?.title ?? "property"}`}
+                  prefetch={false}
+                >
+                  <div className={`listing-style1 ${isSold ? "is-sold" : "is-sale"} card-fixed`}>
+                    {/* ===== Image area (same as grid) ===== */}
+                    <div className="list-thumb">
+                      {(listing.image || "/images/listings/property_slide_1.jpg") && (
+                        <Image
+                          fill
+                          className="thumb-img"
+                          src={listing.image || "/images/listings/property_slide_1.jpg"}
+                          alt={listing.title ?? propertyName ?? "property"}
+                          sizes="(max-width: 768px) 100vw, 50vw"
+                          priority={false}
+                        />
+                      )}
 
-                {/* ===== Image area ===== */}
-                <div className="list-thumb position-relative">
-                  <Image
-                    fill
-                    className="thumb-img"
-                    src={property.image || "/images/listings/property_slide_1.jpg"}
-                    alt={property.title || "property"}
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    priority={false}
-                  />
+                      {/* Status badge */}
+                      <span
+                        className={`status-badge ${isSold ? "sold" : "sale"}`}
+                        aria-label={availability}
+                        title={availability}
+                      >
+                        <i className={`fas ${isSold ? "fa-ban" : "fa-check-circle"} me-2`} />
+                        {isSold ? "SOLD" : "FOR SALE"}
+                      </span>
 
-                  {/* Status badge */}
-                  <span
-                    className={`status-badge ${isSold ? "sold" : "sale"}`}
-                    aria-label={availability}
-                    title={availability}
-                  >
-                    <i className={`fas ${isSold ? "fa-ban" : "fa-check-circle"} me-2`} />
-                    {isSold ? "SOLD" : "FOR SALE"}
-                  </span>
+                      {/* FEATURED badge */}
+                      {listing?.featured && (
+                        <div className="featured-badge" aria-label="Featured property">
+                          <span className="flaticon-electricity me-2" />
+                          FEATURED
+                        </div>
+                      )}
 
-                  {/* FEATURED badge */}
-                  {property.featured && (
-                    <div className="featured-badge">
-                      <span className="flaticon-electricity me-2" />
-                      FEATURED
+                      {/* Price chip (₦ like grid) */}
+                      {listing?.price != null && (
+                        <div className="list-price">₦{Number(listing.price).toLocaleString()}</div>
+                      )}
                     </div>
-                  )}
 
-                  {/* Price chip */}
-                  {property.price != null && (
-                    <div className="list-price">
-                      ${Number(property.price).toLocaleString()}
+                    {/* ===== Body (same as grid) ===== */}
+                    <div className="list-content">
+                      {(listing?.title || propertyName) && (
+                        <h6 className="list-title">{listing?.title || propertyName || "Property"}</h6>
+                      )}
+
+                      {propertyType && <span className="type-chip">{propertyType}</span>}
+
+                      {propertyName && propertyName !== listing?.title && (
+                        <div className="name-line">{propertyName}</div>
+                      )}
+
+                      {listing?.location && <p className="list-text">{listing.location}</p>}
+
+                      {(showBed || showBath || showSqft) && (
+                        <div className="list-meta">
+                          {showBed && (
+                            <span className="meta">
+                              <span className="flaticon-bed meta-icon" /> {listing.bed} Bedroom
+                              {listing.bed === 1 ? "" : "s"}
+                            </span>
+                          )}
+                          {showBath && (
+                            <span className="meta">
+                              <span className="flaticon-shower meta-icon" /> {listing.bath} Bathroom
+                              {listing.bath === 1 ? "" : "s"}
+                            </span>
+                          )}
+                          {showSqft && (
+                            <span className="meta">
+                              <span className="flaticon-expand meta-icon" /> {listing.sqft.toLocaleString()} sq ft
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+                </Link>
+              ) : (
+                <div className={`listing-style1 ${isSold ? "is-sold" : "is-sale"} card-fixed no-link`}>
+                  {/* Same content but without link wrapper */}
+                  <div className="list-thumb">
+                    {(listing.image || "/images/listings/property_slide_1.jpg") && (
+                      <Image
+                        fill
+                        className="thumb-img"
+                        src={listing.image || "/images/listings/property_slide_1.jpg"}
+                        alt={listing.title ?? propertyName ?? "property"}
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        priority={false}
+                      />
+                    )}
+
+                    <span
+                      className={`status-badge ${isSold ? "sold" : "sale"}`}
+                      aria-label={availability}
+                      title={availability}
+                    >
+                      <i className={`fas ${isSold ? "fa-ban" : "fa-check-circle"} me-2`} />
+                      {isSold ? "SOLD" : "FOR SALE"}
+                    </span>
+
+                    {listing?.featured && (
+                      <div className="featured-badge" aria-label="Featured property">
+                        <span className="flaticon-electricity me-2" />
+                        FEATURED
+                      </div>
+                    )}
+
+                    {listing?.price != null && (
+                      <div className="list-price">₦{Number(listing.price).toLocaleString()}</div>
+                    )}
+                  </div>
+
+                  <div className="list-content">
+                    {(listing?.title || propertyName) && (
+                      <h6 className="list-title">{listing?.title || propertyName || "Property"}</h6>
+                    )}
+
+                    {propertyType && <span className="type-chip">{propertyType}</span>}
+
+                    {propertyName && propertyName !== listing?.title && (
+                      <div className="name-line">{propertyName}</div>
+                    )}
+
+                    {listing?.location && <p className="list-text">{listing.location}</p>}
+
+                    {(showBed || showBath || showSqft) && (
+                      <div className="list-meta">
+                        {showBed && (
+                          <span className="meta">
+                            <span className="flaticon-bed meta-icon" /> {listing.bed} Bedroom
+                            {listing.bed === 1 ? "" : "s"}
+                          </span>
+                        )}
+                        {showBath && (
+                          <span className="meta">
+                            <span className="flaticon-shower meta-icon" /> {listing.bath} Bathroom
+                            {listing.bath === 1 ? "" : "s"}
+                          </span>
+                        )}
+                        {showSqft && (
+                          <span className="meta">
+                            <span className="flaticon-expand meta-icon" /> {listing.sqft.toLocaleString()} sq ft
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-
-                {/* ===== Body ===== */}
-                <div className="list-content">
-                  {property?.title && <h6 className="list-title">{property.title}</h6>}
-                  {property?.location && <p className="list-text">{property.location}</p>}
-
-                  {(showBed || showBath || showSqft) && (
-                    <div className="list-meta">
-                      {showBed && (
-                        <span className="meta">
-                          <span className="flaticon-bed meta-icon" /> {property.bed} Bedroom
-                          {property.bed === 1 ? "" : "s"}
-                        </span>
-                      )}
-                      {showBath && (
-                        <span className="meta">
-                          <span className="flaticon-shower meta-icon" /> {property.bath} Bathroom
-                          {property.bath === 1 ? "" : "s"}
-                        </span>
-                      )}
-                      {showSqft && (
-                        <span className="meta">
-                          <span className="flaticon-expand meta-icon" /> {property.sqft.toLocaleString()} sq ft
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
+              )}
             </SwiperSlide>
           );
         })}
       </Swiper>
 
-      {/* Controls */}
+      {/* Controls (unchanged) */}
       <div className="row align-items-center justify-content-center mt30">
         <div className="col-auto">
           <button className="featurePro_prev__active swiper_button" aria-label="Previous">
@@ -202,39 +290,77 @@ export default function FeatureProperties() {
         </div>
       </div>
 
+      {/* === UPDATED styling for better clickability === */}
       <style jsx>{`
+        /* Link wrapper for entire card */
+        .card-link {
+          display: block;
+          text-decoration: none;
+          color: inherit;
+          transition: transform .18s ease, box-shadow .18s ease;
+        }
+        .card-link:hover,
+        .card-link:focus {
+          text-decoration: none;
+          color: inherit;
+          transform: translateY(-2px);
+          box-shadow: 0 14px 28px rgba(0,0,0,.08);
+        }
+
+        /* Equal-height card frame */
         .card-fixed {
           position: relative;
           display: flex;
           flex-direction: column;
-          height: 450px;
+          height: 560px; /* uniform height */
           border-radius: 14px;
           overflow: hidden;
           background: #fff;
           box-shadow: 0 10px 24px rgba(0,0,0,.06);
           transition: transform .18s ease, box-shadow .18s ease;
-          cursor: pointer;
         }
-        .card-fixed:hover {
+        
+        /* Remove hover effects from card when wrapped in link */
+        .card-link .card-fixed {
+          transition: none;
+        }
+        .card-link .card-fixed:hover {
+          transform: none;
+          box-shadow: 0 10px 24px rgba(0,0,0,.06);
+        }
+
+        /* No-link fallback */
+        .no-link {
+          cursor: default;
+        }
+        .no-link:hover {
           transform: translateY(-2px);
           box-shadow: 0 14px 28px rgba(0,0,0,.08);
         }
 
-        .stretched { position: absolute; inset: 0; z-index: 10; }
-
+        /* Media area */
         .list-thumb {
-          position: relative;
+          position: relative; /* required for <Image fill> */
+          height: 260px;      /* fixed media height = no layout shift */
+          background: #f3f4f6;
           border-radius: 14px 14px 0 0;
           overflow: hidden;
-          height: 260px;
-          background: #f3f4f6;
           flex: 0 0 auto;
         }
-        @media (max-width: 575px) {
-          .list-thumb { height: 240px; }
-        }
-        .thumb-img { object-fit: cover; object-position: center; }
+        @media (max-width: 575px) { .list-thumb { height: 240px; } }
 
+        /* Ensure no image distortion / shrinking */
+        .thumb-img { object-fit: cover; object-position: center; }
+        .list-thumb :global(img) {
+          position: absolute !important;
+          inset: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          object-position: center !important;
+        }
+
+        /* Badges */
         .status-badge,
         .featured-badge {
           position: absolute;
@@ -248,8 +374,10 @@ export default function FeatureProperties() {
           border-radius: 999px;
           color: #fff;
           box-shadow: 0 8px 22px rgba(0,0,0,.18);
+          -webkit-backdrop-filter: saturate(140%) blur(4px);
           backdrop-filter: saturate(140%) blur(4px);
           white-space: normal;
+          pointer-events: none; /* Allow clicks to pass through */
         }
         .status-badge { top: 12px; left: 12px; }
         .status-badge.sale { background: linear-gradient(135deg,#22c55e,#16a34a); }
@@ -263,6 +391,8 @@ export default function FeatureProperties() {
 
         .list-price {
           position: absolute;
+          bottom: 12px;
+          left: 12px;
           background: rgba(0,0,0,.65);
           color: #fff;
           padding: 8px 10px;
@@ -272,15 +402,16 @@ export default function FeatureProperties() {
           line-height: 1.1;
           width: auto;
           max-width: calc(100% - 24px);
+          pointer-events: none; /* Allow clicks to pass through */
         }
 
         .list-content {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 10px;
           padding: 18px 18px 16px;
           flex: 1 1 auto;
-          overflow: auto;
+          overflow: auto; /* fixed card height; content scrolls if very long */
         }
         .list-title {
           margin: 0;
@@ -289,6 +420,35 @@ export default function FeatureProperties() {
           line-height: 1.35;
           word-break: break-word;
         }
+
+        /* Type chip */
+        .type-chip {
+          align-self: flex-start;
+          background: #eef2ff;
+          color: #1e40af;
+          border: 1px solid #c7d2fe;
+          font-weight: 700;
+          font-size: 12px;
+          letter-spacing: .2px;
+          padding: 6px 10px;
+          border-radius: 999px;
+          pointer-events: none; /* Allow clicks to pass through */
+        }
+
+        /* Name line */
+        .name-line {
+          align-self: flex-start;
+          padding: 6px 10px;
+          border-radius: 8px;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          color: #0f172a;
+          font-weight: 700;
+          font-size: 13px;
+          line-height: 1.2;
+          pointer-events: none; /* Allow clicks to pass through */
+        }
+
         .list-text {
           margin: 0;
           font-size: 15px;
@@ -310,6 +470,7 @@ export default function FeatureProperties() {
           align-items: center;
           gap: 8px;
           line-height: 1.3;
+          pointer-events: none; /* Allow clicks to pass through */
         }
         .meta-icon { font-size: 18px; }
 

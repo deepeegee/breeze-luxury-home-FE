@@ -5,21 +5,17 @@ import { Tooltip as ReactTooltip } from "react-tooltip";
 
 /* ---------- helpers ---------- */
 function deriveAvailability(p = {}) {
-  const raw = (p.availability || p.status || p.listedIn || "")
-    .toString()
-    .toLowerCase();
-
+  const raw = (p.availability || p.status || p.listedIn || "").toString().toLowerCase();
   if (raw.includes("sold")) return "Sold";
-  if (raw.includes("available") || raw.includes("active") || raw.includes("publish"))
-    return "For sale";
+  if (raw.includes("available") || raw.includes("active") || raw.includes("publish")) return "For sale";
   if (typeof p.forRent === "boolean") return p.forRent ? "For rent" : "For sale";
-  return "For sale"; // fallback
+  return "For sale";
 }
 
 function availabilityClasses(avail) {
   if (avail === "Sold") return "text-danger";
   if (avail === "For rent") return "text-info";
-  return "text-success"; // For sale
+  return "text-success";
 }
 
 /* ---------- component ---------- */
@@ -32,11 +28,7 @@ const PropertyHeader = ({ property }) => {
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const pageUrl = useMemo(
-    () => (typeof window !== "undefined" ? window.location.href : ""),
-    []
-  );
-
+  const pageUrl = useMemo(() => (typeof window !== "undefined" ? window.location.href : ""), []);
   const whatsappHref = useMemo(() => {
     const msg = `${property.title ?? "Property"} — ${pageUrl}`;
     return `https://wa.me/?text=${encodeURIComponent(msg)}`;
@@ -47,25 +39,25 @@ const PropertyHeader = ({ property }) => {
       await navigator.clipboard.writeText(pageUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
-    } catch {
-      /* ignore */
-    }
+    } catch {}
   };
 
   const onPrint = () => {
     if (typeof window !== "undefined") window.print();
   };
 
+  const propertyType = property?.propertyType || property?.category || "";
+
   return (
     <>
       <div className="col-lg-8">
         <div className="single-property-content mb30-md">
+          {/* Title */}
           <h2 className="sp-lg-title">{property.title}</h2>
 
+          {/* Address + availability + year */}
           <div className="pd-meta mb15 d-md-flex align-items-center">
-            <p className="text fz15 mb-0 bdrr1 pr10 bdrrn-sm">
-              {property.location}
-            </p>
+            <p className="text fz15 mb-0 bdrr1 pr10 bdrrn-sm">{property.location}</p>
 
             <span className={`ff-heading fz15 bdrr1 pr10 ml0-sm ml10 bdrrn-sm ${availClass}`}>
               <i className="fas fa-circle fz10 pe-2" />
@@ -74,12 +66,24 @@ const PropertyHeader = ({ property }) => {
 
             <span className="ff-heading bdrr1 fz15 pr10 ml10 ml0-sm bdrrn-sm">
               <i className="far fa-clock pe-2" />
-              {property.yearBuilding
-                ? `Built in ${property.yearBuilding}`
-                : "Year not specified"}
+              {property.yearBuilding ? `Built in ${property.yearBuilding}` : "Year not specified"}
             </span>
           </div>
 
+          {/* NEW: identity row (name + type) BEFORE bed/bath */}
+          <div className="id-row mb10">
+            <div className="id-pill name">
+              {property.name || "—"}
+            </div>
+            {propertyType ? (
+              <div className="id-pill type">
+                <i className="far fa-building me-2" />
+                {propertyType}
+              </div>
+            ) : null}
+          </div>
+
+          {/* Bed / Bath / Size */}
           <div className="property-meta d-flex align-items-center">
             <span className="text fz15" aria-label="Bedrooms">
               <i className="flaticon-bed pe-2 align-text-top" />
@@ -90,21 +94,56 @@ const PropertyHeader = ({ property }) => {
               <i className="flaticon-shower pe-2 align-text-top" />
               {property.bath} bath
             </span>
+
+            {Number.isFinite(property?.sqft) && (
+              <span className="text ml20 fz15" aria-label="Area">
+                <i className="flaticon-expand pe-2 align-text-top" />
+                {Number(property.sqft).toLocaleString()} sq ft
+              </span>
+            )}
           </div>
 
+          {/* NEW: Documents row (so C of O isn't alone) */}
           <div className="mt15 pt15 border-top">
-            <div className="fz13 text-uppercase fw600 mb5 text-muted">Property Title</div>
+            <div className="fz13 text-uppercase fw600 mb5 text-muted">Documents</div>
             <div className="d-flex flex-wrap align-items-center gap-2">
-              {/* BE name */}
-              <span className="badge bg-light text-dark fz12 px-2 py-1">
-                {property.name || "—"}
-              </span>
               <span className="badge bg-success-subtle text-success-emphasis fz12 px-2 py-1">
                 <i className="far fa-file-alt pe-2 align-text-top" />
                 C of O
               </span>
             </div>
           </div>
+
+          {/* Local styles for the identity pills */}
+          <style jsx>{`
+            .id-row {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              margin-bottom: 10px;
+            }
+            .id-pill {
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+              padding: 6px 10px;
+              border-radius: 8px;
+              font-weight: 700;
+              font-size: 13px;
+              line-height: 1.1;
+              border: 1px solid transparent;
+            }
+            .id-pill.name {
+              background: #f8fafc;
+              color: #0f172a;
+              border-color: #e2e8f0;
+            }
+            .id-pill.type {
+              background: #eef2ff;
+              color: #1e40af;
+              border-color: #c7d2fe;
+            }
+          `}</style>
         </div>
       </div>
 
@@ -113,8 +152,7 @@ const PropertyHeader = ({ property }) => {
         <div className="single-property-content position-relative">
           <div className="property-action text-lg-end">
             <div className="d-flex mb20 mb10-md align-items-center justify-content-lg-end position-relative">
-
-              {/* Standalone WhatsApp (external link) */}
+              {/* WhatsApp */}
               <a
                 className="icon mr10"
                 href={whatsappHref}
@@ -139,12 +177,7 @@ const PropertyHeader = ({ property }) => {
               </button>
 
               {/* Print */}
-              <button
-                type="button"
-                className="icon"
-                onClick={onPrint}
-                data-tooltip-id="tip-print"
-              >
+              <button type="button" className="icon" onClick={onPrint} data-tooltip-id="tip-print">
                 <span className="flaticon-printer" />
               </button>
 
@@ -155,9 +188,7 @@ const PropertyHeader = ({ property }) => {
             </div>
 
             <h3 className="price mb-0">
-              {typeof property.price === "number"
-                ? `₦${property.price.toLocaleString()}`
-                : "—"}
+              {typeof property.price === "number" ? `₦${property.price.toLocaleString()}` : "—"}
             </h3>
           </div>
 
@@ -171,12 +202,7 @@ const PropertyHeader = ({ property }) => {
             >
               <div className="d-flex align-items-center justify-content-between mb10">
                 <div className="fw600">Share</div>
-                <button
-                  type="button"
-                  className="btn-close"
-                  aria-label="Close"
-                  onClick={() => setShareOpen(false)}
-                />
+                <button type="button" className="btn-close" aria-label="Close" onClick={() => setShareOpen(false)} />
               </div>
 
               {/* Copy link row */}
@@ -188,11 +214,7 @@ const PropertyHeader = ({ property }) => {
                   value={pageUrl}
                   onFocus={(e) => e.currentTarget.select()}
                 />
-                <button
-                  type="button"
-                  className="ud-btn btn-light btn-sm "
-                  onClick={onCopy}
-                >
+                <button type="button" className="ud-btn btn-light btn-sm " onClick={onCopy}>
                   {copied ? "Copied" : "Copy"}
                 </button>
               </div>

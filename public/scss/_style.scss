@@ -381,7 +381,7 @@ li {
     color: #bebdbd;
     display: block;
     font-family: var(--title-font-family);
-    line-height: 40px;
+    line-height: 30px;
     position: relative;
     -webkit-transition: all 0.3s ease;
     -o-transition: all 0.3s ease;
@@ -3721,7 +3721,7 @@ li {
 
 /*Home 6 Banner*/
 .home-banner-style6 {
-    background-image: url(../images/home/home-6.jpg);
+    background-image: url(../images/home/home-7.webp);
     background-position: center center;
     background-repeat: no-repeat;
     position: relative;
@@ -3984,13 +3984,42 @@ li {
     line-height: 25px;
     width: 25px;
 }
+.img-box-1,
+.img-box-2 {
+  display: inline-block;
+  border-radius: 12px; /* keep your rounded look if needed */
+  overflow: hidden;
+}
+
+.img-box-1 img,
+.img-box-2 img {
+  width: 100%;
+  height: auto;           /* ✅ keep natural ratio */
+  object-fit: cover;      /* ✅ fill space without squishing */
+}
+
+.images-wrap {
+  display: flex;
+  justify-content: flex-end;  /* ✅ push images to the right */
+  gap: 20px;                  /* space between left/right */
+  align-items: center;        /* vertical alignment */
+}
+
+.img-box-1 {
+  flex: 0 0 35%;   /* smaller left image */
+}
+
+.img-box-2 {
+  flex: 0 0 55%;   /* bigger right image */
+}
+
 
 .about-box2 {
-    background-color: rgba(247, 147, 30, 0.07);
+    background-color: rgba(73, 73, 73, 0.07);
     border-radius: 12px;
     margin-bottom: 30px;
     overflow: hidden;
-    padding: 60px 60px 160px;
+    padding: 60px 60px 60px;
     position: relative;
 }
 @media (max-width: 991.98px) {
@@ -6664,7 +6693,7 @@ textarea:focus {
 .btn-light-gray:before,
 .btn-transparent:before,
 .btn-transparent2:before {
-    background-color: #ee4c34;
+    background-color: #f7931e;
     content: "";
     height: 100%;
     left: -100%;
@@ -10026,7 +10055,7 @@ input:focus-visible {
 }
 
 .text-thm2 {
-    color: #ee4c34;
+    color: #f7931e;
 }
 
 .bgc-thm {
@@ -10034,7 +10063,7 @@ input:focus-visible {
 }
 
 .bgc-thm2 {
-    background-color: #ee4c34;
+    background-color: #f7931e;
 }
 
 .bgc-f7 {
@@ -10575,3 +10604,4 @@ input:focus-visible {
   box-shadow: 0 4px 12px rgba(0,0,0,0.0);
   transform: none;
 }
+

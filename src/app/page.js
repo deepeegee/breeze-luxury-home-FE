@@ -130,7 +130,7 @@ const HomePage = () => {
             <div className="col-lg-6 mx-auto" data-aos="fade-up" data-aos-delay="0">
               <div className="main-title text-center">
                 <h2>Testimonials</h2>
-                <p className="paragraph">10,000+ unique online course list designs</p>
+                <p className="paragraph">Hear from our happy clients</p>
               </div>
             </div>
           </div>

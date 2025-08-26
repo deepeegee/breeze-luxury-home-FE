@@ -28,13 +28,11 @@ const SingleV3 = () => {
   const params = useParams();
   const id = String(params?.id ?? "");
 
-  // Fetch the single property directly from BE
   const { data: property, isLoading } = useListing(id);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // 🔔 Silently record a view once per minute per tab (no UI shown)
   useEffect(() => {
     if (!mounted || !property || typeof window === "undefined") return;
 
@@ -44,7 +42,7 @@ const SingleV3 = () => {
     const key = `viewed:${propertyId}`;
     const now = Date.now();
     const last = Number(sessionStorage.getItem(key) || "0");
-    if (now - last < 60_000) return; // throttle
+    if (now - last < 60_000) return;
 
     sessionStorage.setItem(key, String(now));
 
@@ -55,7 +53,6 @@ const SingleV3 = () => {
     });
   }, [mounted, property, id]);
 
-  // Update document title
   useEffect(() => {
     if (mounted && property && typeof window !== "undefined") {
       document.title = `${property.title} - ${property.city ?? ""} | Breeze Luxury Homes`;
@@ -67,7 +64,8 @@ const SingleV3 = () => {
       <>
         <DefaultHeader />
         <MobileMenu />
-        <section className="pt60 pb90 bgc-white">
+        {/* added mt20 here */}
+        <section className="pt60 pb90 bgc-white mt20">
           <div className="container">
             <div className="col-lg-12">
               <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30">
@@ -86,7 +84,8 @@ const SingleV3 = () => {
       <DefaultHeader />
       <MobileMenu />
 
-      <section className="pt60 pb90 bgc-white">
+      {/* added mt20 here */}
+      <section className="pt60 pb90 bgc-white mt50">
         <div className="container">
           <div className="row">
             <PropertyHeader property={property} />
@@ -116,17 +115,6 @@ const SingleV3 = () => {
                   <PropertyFeaturesAminites property={property} />
                 </div>
               </div>
-
-              {/* <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
-                <h4 className="title fz17 mb30">Floor Plans</h4>
-                <div className="row">
-                  <div className="col-md-12">
-                    <div className="accordion-style1 style2">
-                      <FloorPlans />
-                    </div>
-                  </div>
-                </div>
-              </div> */}
 
               <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 ">
                 <h4 className="title fz17 mb30">Video</h4>

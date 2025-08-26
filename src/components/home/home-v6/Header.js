@@ -1,7 +1,7 @@
 "use client";
 
 import MainMenu from "@/components/common/MainMenu";
-import LoginSignupModal from "@/components/common/login-signup-modal";
+//import LoginSignupModal from "@/components/common/login-signup-modal";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -116,8 +116,7 @@ const Header = () => {
       </header>
       {/* End Header */}
 
-      {/* Signup Modal (kept; trigger hidden above) */}
-      <div className="signup-modal">
+      {/* <div className="signup-modal">
         <div
           className="modal fade"
           id="loginSignupModal"
@@ -129,9 +128,7 @@ const Header = () => {
             <LoginSignupModal />
           </div>
         </div>
-      </div>
-      {/* End Signup Modal */}
-
+      </div> */}
     </>
   );
 };

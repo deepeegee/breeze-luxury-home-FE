@@ -170,7 +170,6 @@ export default function ProperteyFiltering() {
     setyearBuild([yMin ?? 0, yMax ?? 2050]);
   }, [sp]);
 
-  // Helper: derive Buy/Rent mode if present; otherwise null
   const deriveMode = (el) => {
     if (typeof el?.forRent === "boolean") return el.forRent ? "Rent" : "Buy";
     const direct =
@@ -191,7 +190,6 @@ export default function ProperteyFiltering() {
     return test(direct) || test(purpose);
   };
 
-  // Apply all client filters
   useEffect(() => {
     if (isLoading) return;
     if (!Array.isArray(listings)) return;
@@ -287,7 +285,6 @@ export default function ProperteyFiltering() {
       );
     }
 
-    // free-text search across many fields
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       andFilters.push(

@@ -78,7 +78,6 @@
     }
   }
   
-  /* CTA row */
   .whyCtas {
     display: flex;
     gap: 10px;
@@ -86,3 +85,8 @@
     margin-top: 6px;
   }
   
+  .whyCtas :global(.ud-btn.btn-thm:hover) {
+    background-color: #f7931e !important;
+    border-color: #f7931e !important; /* if it has a border */
+    color: #fff !important; /* adjust if text needs visibility */
+  }  

@@ -1,11 +1,5 @@
 import React from "react";
 
-const footerLinks = [
-  { text: "Privacy", href: "#" },
-  { text: "Terms", href: "#" },
-  { text: "Sitemap", href: "#" },
-];
-
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
@@ -19,19 +13,6 @@ const Footer = () => {
                 © Breeze Luxury Homes {currentYear}{" "}
    
                 - All rights reserved
-              </p>
-            </div>
-          </div>
-
-          <div className="col-auto">
-            <div className="footer_bottom_right_widgets text-center text-lg-end">
-              <p>
-                {footerLinks.map((link, index) => (
-                  <React.Fragment key={index}>
-                    <a href={link.href}>{link.text}</a>
-                    {index !== footerLinks.length - 1 && " · "}
-                  </React.Fragment>
-                ))}
               </p>
             </div>
           </div>

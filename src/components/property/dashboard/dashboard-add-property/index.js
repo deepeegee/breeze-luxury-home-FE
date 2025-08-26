@@ -9,7 +9,7 @@ import DetailsFiled from "./details-field";
 import Amenities from "./Amenities";
 import { useCreateListing } from "@/lib/useApi";
 
-// ---------- Helpers ----------
+/* ---------- Helpers ---------- */
 const numOrUndefined = (v) => {
   if (v == null) return undefined;
   const s = String(v).trim();
@@ -49,6 +49,23 @@ const parsePhotos = (json) => {
         p && p.url ? { url: String(p.url), isFeatured: !!p.isFeatured } : null
       )
       .filter(Boolean);
+  } catch {
+    return undefined;
+  }
+};
+
+const parseNearby = (json) => {
+  if (!json) return undefined;
+  try {
+    const arr = JSON.parse(json);
+    if (!Array.isArray(arr)) return undefined;
+    return arr
+      .map((n) => ({
+        label: (n?.label ?? "").trim(),
+        distance: (n?.distance ?? "").trim(),
+        category: (n?.category ?? "").trim(),
+      }))
+      .filter((n) => n.label); // keep rows with at least a label
   } catch {
     return undefined;
   }
@@ -101,6 +118,10 @@ const AddPropertyTabContent = () => {
       const floorsNo = posIntOrUndefined(fd.get("floorsNo"));
       const yearBuilt = numOrUndefined(fd.get("yearBuilt"));
 
+      // NEW: read nearby JSON (hidden input from LocationField.NearbyEditor)
+      const nearbyJson = fd.get("nearby");
+      const nearby = parseNearby(nearbyJson);
+
       const payload = prune({
         title: String(title),
         description: fd.get("description"),
@@ -110,10 +131,10 @@ const AddPropertyTabContent = () => {
         status: fd.get("status"),
         price,
         photos: parsePhotos(fd.get("photos")),
-        address: String(fd.get("address") ?? "N/A"),
+        address: String(fd.get("address") ?? "N/A"), // Estate / Address
         country: String(fd.get("country") ?? "Nigeria"),
         state: String(fd.get("state") ?? "N/A"),
-        city: String(fd.get("city") ?? "N/A"),
+        city: String(fd.get("city") ?? "N/A"), // Neighborhood goes here
         sizeInFt,
         rooms,
         bedrooms,
@@ -122,7 +143,8 @@ const AddPropertyTabContent = () => {
         availableFrom: toISODateOrUndefined(fd.get("availableFrom")),
         floorsNo,
         amenities: fd.getAll("amenities").map(String),
-        isFeatured, // ✅ Include featured flag
+        nearby,           // ✅ send array to BE
+        isFeatured,       // ✅ include featured flag
       });
 
       console.log("CREATE /properties/create payload:", payload);
@@ -196,16 +218,12 @@ const AddPropertyTabContent = () => {
       <form id="addPropertyForm" onSubmit={onSubmit}>
         <div className="tab-content" id="nav-tabContent">
           {/* Description */}
-          <div
-            className="tab-pane fade show active"
-            id="nav-desc"
-            role="tabpanel"
-          >
+          <div className="tab-pane fade show active" id="nav-desc" role="tabpanel">
             <div className="ps-widget bgc-white bdrs12 p30 overflow-hidden position-relative">
               <h4 className="title fz17 mb30">Property Description</h4>
               <PropertyDescription />
 
-              {/* ✅ Featured Toggle */}
+              {/* Featured Toggle */}
               <div className="form-check mt3">
                 <input
                   type="checkbox"
@@ -240,8 +258,7 @@ const AddPropertyTabContent = () => {
               <h4 className="title fz17 mb30">Listing Details</h4>
               <DetailsFiled />
               <p className="mt10 text-muted fz14">
-                Only <strong>Bedrooms</strong> and <strong>Bathrooms</strong>{" "}
-                are required here.
+                Only <strong>Floors no</strong>, <strong>Bedrooms</strong> and <strong>Bathrooms</strong> are required here.
               </p>
             </div>
           </div>
@@ -258,11 +275,7 @@ const AddPropertyTabContent = () => {
         </div>
 
         <div className="d-flex align-items-center justify-content-between mt30 pt20 border-top">
-          {submitError ? (
-            <div className="text-danger">{submitError}</div>
-          ) : (
-            <div />
-          )}
+          {submitError ? <div className="text-danger">{submitError}</div> : <div />}
           <div className="d-flex gap-2 my-3">
             <button
               type="button"
@@ -272,11 +285,7 @@ const AddPropertyTabContent = () => {
             >
               Cancel
             </button>
-            <button
-              type="submit"
-              className="ud-btn btn-thm"
-              disabled={submitting}
-            >
+            <button type="submit" className="ud-btn btn-thm" disabled={submitting}>
               {submitting ? "Creating…" : "Create Listing"}
             </button>
           </div>

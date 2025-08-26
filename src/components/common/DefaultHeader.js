@@ -1,7 +1,7 @@
 "use client";
 
 import MainMenu from "@/components/common/MainMenu";
-import LoginSignupModal from "@/components/common/login-signup-modal";
+//import LoginSignupModal from "@/components/common/login-signup-modal";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
@@ -19,7 +19,7 @@ const DefaultHeader = () => {
   return (
     <>
       <header
-        className={`header-nav nav-homepage-style light-header menu-home4 main-menu ${
+        className={`header-nav nav-homepage-style at-home3 main-menu ${
           navbar ? "sticky slideInDown animated" : ""
         }`}
       >
@@ -31,7 +31,11 @@ const DefaultHeader = () => {
               <div className="col-auto">
                 <div className="d-flex align-items-center">
                   <div className="logos mr40">
-                    <Link className="header-logo logo1" href="/" aria-label="Home">
+                    <Link
+                      className="header-logo logo1"
+                      href="/"
+                      aria-label="Home"
+                    >
                       <Image
                         width={160}
                         height={44}
@@ -40,7 +44,11 @@ const DefaultHeader = () => {
                         priority
                       />
                     </Link>
-                    <Link className="header-logo logo2" href="/" aria-label="Home">
+                    <Link
+                      className="header-logo logo2"
+                      href="/"
+                      aria-label="Home"
+                    >
                       <Image
                         width={160}
                         height={44}
@@ -120,7 +128,7 @@ const DefaultHeader = () => {
       {/* End Header */}
 
       {/* Signup Modal (kept; trigger hidden above) */}
-      <div className="signup-modal">
+      {/* <div className="signup-modal">
         <div
           className="modal fade"
           id="loginSignupModal"
@@ -132,8 +140,7 @@ const DefaultHeader = () => {
             <LoginSignupModal />
           </div>
         </div>
-      </div>
-
+      </div> */}
     </>
   );
 };

@@ -4,7 +4,6 @@ import Select from "react-select";
 import { CATEGORY_OPTIONS } from "@/constants/propertyOptions";
 
 const PropertyDescription = () => {
-  // Select options
   const listedInOptions = [
     { value: "Active", label: "Active" },
     { value: "Processing", label: "Processing" },
@@ -15,25 +14,20 @@ const PropertyDescription = () => {
     { value: "Published", label: "Published" },
   ];
 
-  // Local state to mirror react-select + featured into hidden inputs
+  // Local state to mirror react-select values into hidden inputs
   const [category, setCategory] = useState("");
   const [listedIn, setListedIn] = useState("");
   const [status, setStatus] = useState("");
 
-  // NEW: isFeatured toggle (default false)
-  const [isFeatured, setIsFeatured] = useState(false);
-
   const [showSelect, setShowSelect] = useState(false);
-  useEffect(() => {
-    setShowSelect(true);
-  }, []);
+  useEffect(() => setShowSelect(true), []);
 
   const customStyles = {
     option: (styles, { isFocused, isSelected, isHovered }) => ({
       ...styles,
       backgroundColor: isSelected
         ? "#eb6753"
-        : (isHovered || isFocused)
+        : isHovered || isFocused
         ? "#eb675312"
         : undefined,
     }),
@@ -41,27 +35,12 @@ const PropertyDescription = () => {
 
   return (
     <div className="form-style1">
-      {/* Hidden inputs so the parent <form> can capture react-select & featured values */}
+      {/* Hidden inputs so the parent <form> can capture react-select values */}
       <input type="hidden" name="category" value={category} />
       <input type="hidden" name="listedIn" value={listedIn} />
       <input type="hidden" name="status" value={status} />
-      {/* NEW: featured flag mirrored to a hidden input as 'true' | 'false' */}
-      <input type="hidden" name="isFeatured" value={String(isFeatured)} />
 
       <div className="row">
-        {/* Marketing / display name (optional) */}
-        <div className="col-sm-12">
-          <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">Name (optional)</label>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="e.g., Sky Tower Apartment"
-              name="name"
-            />
-          </div>
-        </div>
-
         {/* Title */}
         <div className="col-sm-12">
           <div className="mb20">
@@ -75,11 +54,27 @@ const PropertyDescription = () => {
             />
           </div>
         </div>
-
+        
+        {/* Marketing / display name (optional) */}
+        <div className="col-sm-12">
+          <div className="mb20">
+            <label className="heading-color ff-heading fw600 mb10">
+              Name (optional)
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="e.g., Sky Tower Apartment"
+              name="name"
+            />
+          </div>
+        </div>
         {/* Description */}
         <div className="col-sm-12">
           <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">Description</label>
+            <label className="heading-color ff-heading fw600 mb10">
+              Description
+            </label>
             <textarea
               cols={30}
               rows={5}
@@ -92,7 +87,9 @@ const PropertyDescription = () => {
         {/* Property ID (optional but useful) */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">Property ID (optional)</label>
+            <label className="heading-color ff-heading fw600 mb10">
+              Property ID (optional)
+            </label>
             <input
               type="text"
               className="form-control"
@@ -105,7 +102,9 @@ const PropertyDescription = () => {
         {/* Select Category */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">Select Category</label>
+            <label className="heading-color ff-heading fw600 mb10">
+              Select Category
+            </label>
             <div className="location-area">
               {showSelect && (
                 <Select
@@ -117,7 +116,8 @@ const PropertyDescription = () => {
                   placeholder="Select category"
                   value={
                     category
-                      ? CATEGORY_OPTIONS.find((o) => o.value === category) || null
+                      ? CATEGORY_OPTIONS.find((o) => o.value === category) ||
+                        null
                       : null
                   }
                   onChange={(opt) => setCategory(opt?.value ?? "")}
@@ -131,7 +131,9 @@ const PropertyDescription = () => {
         {/* Listed in */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">Listed in</label>
+            <label className="heading-color ff-heading fw600 mb10">
+              Listed in
+            </label>
             <div className="location-area">
               {showSelect && (
                 <Select
@@ -143,7 +145,8 @@ const PropertyDescription = () => {
                   placeholder="Select listing state"
                   value={
                     listedIn
-                      ? listedInOptions.find((o) => o.value === listedIn) || null
+                      ? listedInOptions.find((o) => o.value === listedIn) ||
+                        null
                       : null
                   }
                   onChange={(opt) => setListedIn(opt?.value ?? "")}
@@ -157,7 +160,9 @@ const PropertyDescription = () => {
         {/* Property Status */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">Property Status</label>
+            <label className="heading-color ff-heading fw600 mb10">
+              Property Status
+            </label>
             <div className="location-area">
               {showSelect && (
                 <Select
@@ -180,31 +185,12 @@ const PropertyDescription = () => {
           </div>
         </div>
 
-        {/* NEW: Is Featured toggle */}
-        <div className="col-sm-12">
-          <div className="mb20 d-flex align-items-center gap-3">
-            <div className="form-check form-switch">
-              <input
-                id="isFeaturedToggle"
-                type="checkbox"
-                className="form-check-input"
-                checked={isFeatured}
-                onChange={(e) => setIsFeatured(e.target.checked)}
-              />
-              <label className="form-check-label ms-2" htmlFor="isFeaturedToggle">
-                Mark as Featured
-              </label>
-            </div>
-            <span className="text-muted fz14">
-              Featured properties can be highlighted on the homepage or “Featured” sections.
-            </span>
-          </div>
-        </div>
-
         {/* Price */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb30">
-            <label className="heading-color ff-heading fw600 mb10">Price (₦ or $)</label>
+            <label className="heading-color ff-heading fw600 mb10">
+              Price (₦ or $)
+            </label>
             <input
               type="number"
               min={0}
@@ -219,7 +205,9 @@ const PropertyDescription = () => {
         {/* Yearly Tax Rate (optional) */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb30">
-            <label className="heading-color ff-heading fw600 mb10">Yearly Tax Rate</label>
+            <label className="heading-color ff-heading fw600 mb10">
+              Yearly Tax Rate
+            </label>
             <input
               type="number"
               min={0}
@@ -233,7 +221,9 @@ const PropertyDescription = () => {
         {/* After Price Label (optional) */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb30">
-            <label className="heading-color ff-heading fw600 mb10">After Price Label</label>
+            <label className="heading-color ff-heading fw600 mb10">
+              After Price Label
+            </label>
             <input
               type="text"
               className="form-control"
