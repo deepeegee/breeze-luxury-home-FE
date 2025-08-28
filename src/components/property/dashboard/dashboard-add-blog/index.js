@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Editor from './editor';
+import SimpleEditor from '@/components/tiptap-templates/simple/simple-editor';
 import { useCreateBlog } from '@/lib/useApi';
 
 function isHtmlEmpty(html) {
@@ -91,8 +91,7 @@ const AddBlogContent = () => {
       await createPost(form);
       setOk(publish ? 'Post published!' : 'Draft saved.');
 
-      // 🔁 NEW: always go to blog list after success
-      router.replace('/blog-list-v3');
+      router.replace('/dashboard-my-blogs');
     } catch (e) {
       setError(e?.message || 'Failed to save blog post.');
     }
@@ -212,7 +211,7 @@ const AddBlogContent = () => {
 
           <div className="mb30">
             <label className="form-label fw600">Content</label>
-            <Editor initialHTML="" onChange={setHtml} onAddImage={handleAddInlineImage} className="mb10" />
+            <SimpleEditor initialHTML="" onChange={setHtml} onAddImage={handleAddInlineImage} className="mb10" />
             <small className="text-muted">
               Paste, drag & drop, or pick images. They’ll upload with this post on Save/Publish.
             </small>

@@ -34,9 +34,7 @@ const MobileMenu = () => {
                   alt="Breeze Luxury Homes Logo"
                 />
               </Link>
-              <Link href="/login">
-                <span className="icon fz18 far fa-user-circle" />
-              </Link>
+              <p></p>
             </div>
           </div>
         </div>

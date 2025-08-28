@@ -1,7 +1,11 @@
+// middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const AUTH_COOKIE_NAMES = [
+  "Authentication",   // ✅ your BE cookie
+  "authentication",
+  "AUTHENTICATION",
   "admin_session",
   "auth_token",
   "session_token",
@@ -14,7 +18,6 @@ const AUTH_COOKIE_NAMES = [
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
-  // Only applied to routes in the matcher below, but keep a tiny guard:
   const isProtectedRoute =
     pathname.startsWith("/admin") ||
     pathname.startsWith("/dashboard") ||
@@ -23,10 +26,10 @@ export function middleware(req: NextRequest) {
 
   if (!isProtectedRoute) return NextResponse.next();
 
+  // ✅ if ANY of the trusted cookie names is present, allow
   const hasAuth = AUTH_COOKIE_NAMES.some((name) => req.cookies.has(name));
 
   if (!hasAuth) {
-    // remember where the user was going
     const loginUrl = new URL("/login", req.url);
     const from = `${pathname}${search ?? ""}`;
     loginUrl.searchParams.set("from", from);
@@ -41,7 +44,6 @@ export const config = {
     "/admin/:path*",
     "/dashboard/:path*",
     "/dashboard-home",
-    // covers routes like /dashboard-add-property, /dashboard-my-profile, etc.
     "/dashboard-:path*",
   ],
 };

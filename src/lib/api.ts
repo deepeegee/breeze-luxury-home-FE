@@ -175,6 +175,22 @@ export type PropertyBE = {
   updatedAt?: string;
 };
 
+/* ========= NEW: analytics types ========= */
+export type PropertyDailyViewRow = {
+  _id: string;
+  propertyId: string;     // mongo _id of property
+  date: string;           // ISO day (UTC midnight)
+  createdAt: string;
+  updatedAt: string;
+  viewCount: number;
+};
+
+export type GlobalDailyViewRow = {
+  totalViews: number;     // sum across all properties
+  propertiesViewed: number; // distinct properties with ≥1 view that day
+  date: string;           // ISO day (UTC midnight)
+};
+
 export type BlogAuthor = {
   id: string | number;
   username?: string;
@@ -312,6 +328,55 @@ function normalizePhotos(input?: PhotoBE[]): { url: string }[] | undefined {
   return items.map(({ url }) => ({ url }));
 }
 
+/* ========= date/aggregation utils (for charts & "today") ========= */
+export function toLocalDayKey(d: string | Date, tz = 'Africa/Lagos') {
+  const date = typeof d === 'string' ? new Date(d) : d;
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(date);
+  const y = parts.find(p => p.type === 'year')?.value;
+  const m = parts.find(p => p.type === 'month')?.value;
+  const dd = parts.find(p => p.type === 'day')?.value;
+  return `${y}-${m}-${dd}`; // YYYY-MM-DD
+}
+export function toMonthKey(d: string | Date, tz = 'Africa/Lagos') {
+  const date = typeof d === 'string' ? new Date(d) : d;
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz, year: 'numeric', month: '2-digit'
+  }).formatToParts(date);
+  const y = parts.find(p => p.type === 'year')?.value;
+  const m = parts.find(p => p.type === 'month')?.value;
+  return `${y}-${m}`; // YYYY-MM
+}
+export const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
+
+export function groupDailyToMonthly<T extends { date: string }>(
+  rows: T[],
+  pick: (row: T) => number,
+  tz = 'Africa/Lagos'
+) {
+  const map = new Map<string, number>();
+
+  // accumulate totals per month
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    const key = toMonthKey(r.date, tz);
+    const prev = map.has(key) ? (map.get(key) as number) : 0;
+    map.set(key, prev + pick(r));
+  }
+
+  // convert map → array without using iterators/spread
+  const out: { month: string; total: number }[] = [];
+  map.forEach((total, month) => {
+    out.push({ month, total });
+  });
+
+  // sort ascending by month key
+  out.sort((a, b) => a.month.localeCompare(b.month));
+  return out;
+}
+
+
 /* ========================
    Mappers (BE -> FE)
 ======================== */
@@ -437,10 +502,20 @@ function toBlog(b: BlogBE): BlogPost {
    AUTH / ADMIN
 =========================================================== */
 export function login(email: string, password: string) {
-  return apiFetch<{ token?: string; user?: any }>(`/auth/login`, {
+  return apiFetch<{ token?: string; user?: any; success?: boolean }>(`/auth/login`, {
     method: 'POST',
     body: JSON.stringify({ email, password }),
-  }).then((response) => (response && Object.keys(response).length === 0 ? { success: true } as any : response));
+  }).then((response) => {
+    // ✅ If the server set an HTTP-only cookie and returns empty or {success:true},
+    // treat it as a success and surface a sentinel token so the UI can branch.
+    if (!response || Object.keys(response).length === 0) {
+      return { success: true, token: 'http-only-cookie' } as any;
+    }
+    if (response.success && !response.token) {
+      return { ...response, token: 'http-only-cookie' } as any;
+    }
+    return response;
+  });
 }
 
 export function registerAdmin(data: { name: string; email: string; password: string }) {
@@ -462,6 +537,11 @@ export function getListings(params?: Record<string, any>) {
   return apiFetch<PropertyBE[]>(`/properties${qs}`).then((list) => list.map(toListing));
 }
 
+/**
+ * IMPORTANT:
+ * Calling GET /properties/:id on your BE ALSO increments today's view count.
+ * Keep this as the detail fetch you already use.
+ */
 export function getListing(id: string | number) {
   return apiFetch<PropertyBE>(`/properties/${id}`).then(toListing);
 }
@@ -503,19 +583,76 @@ export function uploadListingPhoto(file: File) {
   });
 }
 
+/* ========= NEW/UPDATED: views & analytics ========= */
+
+/**
+ * Per-property daily series.
+ * BE route: GET /properties/:id/views
+ * NOTE: :id is the Mongo _id (e.g. "68ae08d7..."), not the human propertyId like "BL001".
+ */
+export async function getPropertyDailyViewsSeries(id: string | number): Promise<PropertyDailyViewRow[]> {
+  const rows = await apiFetch<PropertyDailyViewRow[]>(`/properties/${id}/views`);
+  return Array.isArray(rows) ? rows : [];
+}
+
+/**
+ * Back-compat helper returning a single number.
+ * Now defined as the ALL-TIME total for that property (sum of daily rows).
+ */
 export async function getPropertyViews(id: string | number): Promise<number | null> {
   try {
-    const res = await apiFetch<any>(`/properties/${id}/views`);
-    if (typeof res === 'number') return res;
-    if (res?.count != null) return Number(res.count);
-    if (res?.views != null) return Number(res.views);
-    if (res?.data?.count != null) return Number(res.data.count);
-    return null;
+    const rows = await getPropertyDailyViewsSeries(id);
+    return sum(rows.map(r => r.viewCount));
   } catch {
     return null;
   }
 }
 
+/** Convenience: today's views for a property (default TZ Africa/Lagos) */
+export async function getPropertyViewsToday(id: string | number, tz = 'Africa/Lagos'): Promise<number> {
+  const rows = await getPropertyDailyViewsSeries(id);
+  const todayKey = toLocalDayKey(new Date(), tz);
+  const hit = rows.find(r => toLocalDayKey(r.date, tz) === todayKey);
+  return hit?.viewCount ?? 0;
+}
+
+/** Global daily analytics across all properties. GET /properties/analytics/views/daily */
+export async function getGlobalDailyViewsSeries(): Promise<GlobalDailyViewRow[]> {
+  const rows = await apiFetch<GlobalDailyViewRow[]>(`/properties/analytics/views/daily`);
+  return Array.isArray(rows) ? rows : [];
+}
+
+/**
+ * Global summary ready for admin dashboard.
+ * Returns totals + daily series (x=YYYY-MM-DD, y=totalViews) + monthly buckets.
+ */
+export async function getGlobalViewsSummary(tz = 'Africa/Lagos'): Promise<{
+  totalViewsAllTime: number;
+  todayViews: number;
+  daily: { x: string; y: number; propertiesViewed: number }[];
+  monthly: { month: string; total: number }[];
+}> {
+  const dailyRows = await getGlobalDailyViewsSeries();
+  const totalViewsAllTime = sum(dailyRows.map(d => d.totalViews));
+
+  const todayKey = toLocalDayKey(new Date(), tz);
+  const todayViews = dailyRows.find(d => toLocalDayKey(d.date, tz) === todayKey)?.totalViews ?? 0;
+
+  const daily = dailyRows
+    .slice()
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map(d => ({ x: toLocalDayKey(d.date, tz), y: d.totalViews, propertiesViewed: d.propertiesViewed }));
+
+  const monthly = groupDailyToMonthly(dailyRows, d => d.totalViews, tz);
+
+  return { totalViewsAllTime, todayViews, daily, monthly };
+}
+
+/**
+ * Pings a view endpoint without blocking navigation.
+ * If your BE needs POST /properties/:id/views for manual pings, keep this;
+ * otherwise, GET /properties/:id already increments when you fetch details.
+ */
 type ViewPingPayload = {
   route?: string;
   referrer?: string;

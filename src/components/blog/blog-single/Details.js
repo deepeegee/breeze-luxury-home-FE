@@ -4,10 +4,10 @@ import Image from "next/image";
 
 export default function Details({ blog }) {
   return (
-    <div className="container">
+    <div className="container ">
       <div className="row" data-aos="fade-up" data-aos-delay="100">
         <div className="col-lg-12">
-          <h2 className="blog-title">
+          <h2 className="blog-title mt50">
             {blog?.title || "Untitled Blog"}
           </h2>
           <div className="blog-single-meta">

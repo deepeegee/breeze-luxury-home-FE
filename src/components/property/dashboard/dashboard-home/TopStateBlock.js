@@ -1,20 +1,27 @@
 "use client";
 import React from "react";
-import { useListings, useTotalPropertyViews } from "@/lib/useApi";
+import { useListings, useGlobalViewsSummary } from "@/lib/useApi";
+
+const formatCount = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n.toLocaleString() : "0";
+};
 
 const TopStateBlock = () => {
   const { data: properties, isLoading: loadingProps } = useListings();
-  const { total, isLoading: loadingViews } = useTotalPropertyViews();
+  const { data: summary, isLoading: loadingViews } = useGlobalViewsSummary("Africa/Lagos");
+
+  const totalViewsAllTime = summary?.totalViewsAllTime ?? 0;
 
   const statisticsData = [
     {
       text: "All Properties",
-      title: loadingProps ? "…" : String(properties?.length ?? 0),
+      title: loadingProps ? "…" : formatCount(properties?.length ?? 0),
       icon: "flaticon-home",
     },
     {
       text: "Total Views",
-      title: loadingViews ? "…" : String(total),
+      title: loadingViews ? "…" : formatCount(totalViewsAllTime),
       icon: "flaticon-search-chart",
     },
   ];

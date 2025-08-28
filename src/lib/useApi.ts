@@ -11,7 +11,13 @@ import {
   updateListing,
   deleteListing,
   uploadListingPhoto,
-  getPropertyViews,
+
+  // ✅ updated views/analytics helpers
+  getPropertyViews,                 // number (all-time for a property)
+  getPropertyDailyViewsSeries,      // per-property daily rows
+  getPropertyViewsToday,            // number (today for a property)
+  getGlobalDailyViewsSeries,        // global daily rows
+  getGlobalViewsSummary,            // { totalViewsAllTime, todayViews, daily, monthly }
   recordPropertyView,
 
   /* Blogs (PUBLIC + ADMIN + MUTATIONS) */
@@ -35,6 +41,8 @@ import {
   type Listing,
   type PropertyBE,
   type BlogPost,
+  type PropertyDailyViewRow,
+  type GlobalDailyViewRow,
 } from '@/lib/api';
 
 /* small adapter to normalize SWR return shape */
@@ -63,46 +71,53 @@ export function useListing(id?: string | number) {
   return adapt<Listing | null>(swr, null);
 }
 
+/* =========================
+   Views (Per-Property)
+========================= */
+
+/** All-time views (sum of daily rows) for a property */
 export function usePropertyViews(id?: string | number) {
-  const key = id != null ? (['property-views', String(id)] as const) : null;
+  const key = id != null ? (['property-views-total', String(id)] as const) : null;
   const swr = useSWR<number | null>(key, () => getPropertyViews(id as string | number));
   return adapt<number | null>(swr, null);
 }
 
-export function useTotalPropertyViews() {
-  const { data: listings } = useListings();
+/** Today's views for a property (Africa/Lagos by default) */
+export function usePropertyViewsToday(id?: string | number, tz = 'Africa/Lagos') {
+  const key = id != null ? (['property-views-today', String(id), tz] as const) : null;
+  const swr = useSWR<number>(key, () => getPropertyViewsToday(id as string | number, tz));
+  return adapt<number>(swr, 0);
+}
 
-  const idsKey =
-    Array.isArray(listings) && listings.length
-      ? listings.map((p) => String(p.id)).sort().join(',')
-      : '';
+/** Daily series for a property (for charts) */
+export function usePropertyDailyViews(id?: string | number) {
+  const key = id != null ? (['property-views-series', String(id)] as const) : null;
+  const swr = useSWR<PropertyDailyViewRow[]>(key, () => getPropertyDailyViewsSeries(id as string | number));
+  return adapt<PropertyDailyViewRow[]>(swr, []);
+}
+
+/**
+ * (Replaced) Old hook tried to aggregate across all properties using a hardcoded id
+ * If you still need a site-wide sum across selected properties, pass ids in.
+ */
+export function useTotalPropertyViews(ids?: (string | number)[]) {
+  const key =
+    Array.isArray(ids) && ids.length
+      ? (['total-property-views', ids.map(String).sort().join(',')] as const)
+      : null;
 
   const swr = useSWR<number>(
-    idsKey ? (['total-property-views', idsKey] as const) : null,
+    key,
     async () => {
-      const ids = (listings ?? []).map((p) => p.id).filter((x) => x != null);
-      const counts = await Promise.all(
-        ids.map(async (id) => {
-          try {
-            const n = await getPropertyViews(id as string | number);
-            return typeof n === 'number' && Number.isFinite(n) ? n : 0;
-          } catch {
-            return 0;
-          }
-        })
-      );
-      return counts.reduce((a, b) => a + b, 0);
+      const totals = await Promise.all(ids!.map((id) => getPropertyViews(id)));
+      return totals.reduce((acc, n) => acc + (n ?? 0), 0);
     }
   );
 
-  return {
-    total: swr.data ?? 0,
-    isLoading: !!swr.isLoading,
-    error: (swr.error as Error) ?? null,
-    mutate: swr.mutate,
-  };
+  return adapt<number>(swr, 0);
 }
 
+/** Fire-and-forget ping if your BE supports POST /properties/:id/views */
 export function useRecordPropertyView() {
   return useSWRMutation<void, any, [string], { id: string | number; meta?: any }>(
     ['record-property-view'],
@@ -111,6 +126,32 @@ export function useRecordPropertyView() {
     }
   );
 }
+
+/* =========================
+   Global Analytics (Admin)
+========================= */
+
+/** Raw global daily rows from /properties/analytics/views/daily */
+export function useGlobalDailyViews() {
+  const swr = useSWR<GlobalDailyViewRow[]>(['global-views-daily'] as const, () => getGlobalDailyViewsSeries());
+  return adapt<GlobalDailyViewRow[]>(swr, []);
+}
+
+/** Ready-to-render dashboard summary: totals + daily + monthly */
+export function useGlobalViewsSummary(tz = 'Africa/Lagos') {
+  const key = ['global-views-summary', tz] as const;
+  const swr = useSWR(key, () => getGlobalViewsSummary(tz));
+  return adapt<{
+    totalViewsAllTime: number;
+    todayViews: number;
+    daily: { x: string; y: number; propertiesViewed: number }[];
+    monthly: { month: string; total: number }[];
+  }>(swr, { totalViewsAllTime: 0, todayViews: 0, daily: [], monthly: [] });
+}
+
+/* =========
+   Listings mutations
+========= */
 
 export function useCreateListing() {
   return useSWRMutation<Listing, any, [string], PropertyBE>(
@@ -199,9 +240,15 @@ export function useDeleteBlog() {
 
 export function useTestimonials() {
   const swr = useSWR(['testimonials'] as const, () => getTestimonials());
-  return adapt<
-    { id: string | number; title: string; quote: string; stars: number; image: string; name: string; company: string }[]
-  >(swr, []);
+  return adapt<{
+    id: string | number;
+    title: string;
+    quote: string;
+    stars: number;
+    image: string;
+    name: string;
+    company: string;
+  }[]>(swr, []);
 }
 
 /* =========
