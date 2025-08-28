@@ -5,8 +5,7 @@ const LoginSignupModal = () => {
   return (
     <div className="modal-content">
       <div className="modal-header">
-        <h5 className="modal-title" id="exampleModalToggleLabel">
-        </h5>
+        <h5 className="modal-title" id="exampleModalToggleLabel"></h5>
         <button
           type="button"
           className="btn-close"
@@ -47,7 +46,6 @@ const LoginSignupModal = () => {
                 </button>
               </div>
             </nav>
-            {/* End nav tab items */}
 
             <div className="tab-content" id="nav-tabContent2">
               <div
@@ -58,7 +56,6 @@ const LoginSignupModal = () => {
               >
                 <SignIn />
               </div>
-              {/* End signin content */}
 
               <div
                 className="tab-pane fade fz15"

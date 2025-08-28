@@ -29,12 +29,10 @@ const SignIn = () => {
       else if (result?.data?.token) token = result.data.token;
       else if (result?.access_token) token = result.access_token;
 
-      // ✅ Accept cookie-only success
       if (result?.success && !token) token = "http-only-cookie";
 
       if (token) {
         if (token !== "http-only-cookie") {
-          // Optional: if BE also returns a token, mirror it in a non-HTTP-only cookie for the UI.
           const attrs = [`admin_session=${token}`, "path=/", "max-age=86400"];
           if (process.env.NODE_ENV === "production") {
             attrs.push("secure", "samesite=strict");
@@ -42,7 +40,6 @@ const SignIn = () => {
           document.cookie = attrs.join("; ");
         }
 
-        // ✅ Redirect to the original destination if present
         router.push(from);
         router.refresh?.();
         return;
