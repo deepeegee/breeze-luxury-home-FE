@@ -20,44 +20,54 @@ function availabilityClasses(avail) {
 
 /* ---------- component ---------- */
 const PropertyHeader = ({ property }) => {
-  if (!property) return <div>Property not found</div>;
+  // Always call hooks; use a safe fallback object and a flag for UI
+  const hasProperty = !!property;
+  const p = property ?? {};
 
-  const availability = deriveAvailability(property);
+  const availability = deriveAvailability(p);
   const availClass = availabilityClasses(availability);
 
   const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const pageUrl = useMemo(() => (typeof window !== "undefined" ? window.location.href : ""), []);
+  const pageUrl = useMemo(
+    () => (typeof window !== "undefined" ? window.location.href : ""),
+    []
+  );
+
   const whatsappHref = useMemo(() => {
-    const msg = `${property.title ?? "Property"} — ${pageUrl}`;
+    const msg = `${p.title ?? "Property"} — ${pageUrl}`;
     return `https://wa.me/?text=${encodeURIComponent(msg)}`;
-  }, [pageUrl, property?.title]);
+  }, [pageUrl, p.title]);
 
   const onCopy = async () => {
     try {
       await navigator.clipboard.writeText(pageUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
-    } catch {}
+    } catch {
+      /* no-op */
+    }
   };
 
   const onPrint = () => {
     if (typeof window !== "undefined") window.print();
   };
 
-  const propertyType = property?.propertyType || property?.category || "";
+  const propertyType = p.propertyType || p.category || "";
 
   return (
     <>
       <div className="col-lg-8">
         <div className="single-property-content mb30-md">
           {/* Title */}
-          <h2 className="sp-lg-title">{property.title}</h2>
+          <h2 className="sp-lg-title">{hasProperty ? p.title : "Property not found"}</h2>
 
           {/* Address + availability + year */}
           <div className="pd-meta mb15 d-md-flex align-items-center">
-            <p className="text fz15 mb-0 bdrr1 pr10 bdrrn-sm">{property.location}</p>
+            <p className="text fz15 mb-0 bdrr1 pr10 bdrrn-sm">
+              {p.location || "—"}
+            </p>
 
             <span className={`ff-heading fz15 bdrr1 pr10 ml0-sm ml10 bdrrn-sm ${availClass}`}>
               <i className="fas fa-circle fz10 pe-2" />
@@ -66,15 +76,13 @@ const PropertyHeader = ({ property }) => {
 
             <span className="ff-heading bdrr1 fz15 pr10 ml10 ml0-sm bdrrn-sm">
               <i className="far fa-clock pe-2" />
-              {property.yearBuilding ? `Built in ${property.yearBuilding}` : "Year not specified"}
+              {p.yearBuilding ? `Built in ${p.yearBuilding}` : "Year not specified"}
             </span>
           </div>
 
           {/* NEW: identity row (name + type) BEFORE bed/bath */}
           <div className="id-row mb10">
-            <div className="id-pill name">
-              {property.name || "—"}
-            </div>
+            <div className="id-pill name">{p.name || "—"}</div>
             {propertyType ? (
               <div className="id-pill type">
                 <i className="far fa-building me-2" />
@@ -87,23 +95,23 @@ const PropertyHeader = ({ property }) => {
           <div className="property-meta d-flex align-items-center">
             <span className="text fz15" aria-label="Bedrooms">
               <i className="flaticon-bed pe-2 align-text-top" />
-              {property.bed} bed
+              {p.bed ?? "—"} bed
             </span>
 
             <span className="text ml20 fz15" aria-label="Bathrooms">
               <i className="flaticon-shower pe-2 align-text-top" />
-              {property.bath} bath
+              {p.bath ?? "—"} bath
             </span>
 
-            {Number.isFinite(property?.sqft) && (
+            {Number.isFinite(p?.sqft) && (
               <span className="text ml20 fz15" aria-label="Area">
                 <i className="flaticon-expand pe-2 align-text-top" />
-                {Number(property.sqft).toLocaleString()} sq ft
+                {Number(p.sqft).toLocaleString()} sq ft
               </span>
             )}
           </div>
 
-          {/* NEW: Documents row (so C of O isn't alone) */}
+          {/* NEW: Documents row */}
           <div className="mt15 pt15 border-top">
             <div className="fz13 text-uppercase fw600 mb5 text-muted">Documents</div>
             <div className="d-flex flex-wrap align-items-center gap-2">
@@ -188,7 +196,7 @@ const PropertyHeader = ({ property }) => {
             </div>
 
             <h3 className="price mb-0">
-              {typeof property.price === "number" ? `₦${property.price.toLocaleString()}` : "—"}
+              {typeof p.price === "number" ? `₦${p.price.toLocaleString()}` : "—"}
             </h3>
           </div>
 

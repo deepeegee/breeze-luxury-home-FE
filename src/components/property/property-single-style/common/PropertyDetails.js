@@ -1,12 +1,11 @@
 "use client";
+
 import React, { useMemo } from "react";
 
 const fmtInt = (n) =>
   typeof n === "number" && Number.isFinite(n) ? n.toLocaleString() : null;
 const fmtMoney = (n) =>
-  typeof n === "number" && Number.isFinite(n)
-    ? `$${n.toLocaleString()}`
-    : null;
+  typeof n === "number" && Number.isFinite(n) ? `₦${n.toLocaleString()}` : null;
 
 const has = (v) => {
   if (v === 0) return true;
@@ -17,72 +16,90 @@ const has = (v) => {
 };
 
 const PropertyDetails = ({ property }) => {
-  if (!property) return <div>Property details not available</div>;
+  // Always call hooks; use safe fallback
+  const p = property ?? {};
 
-  const details = [];
+  // Build the details array inside a memo so its identity is stable
+  const details = useMemo(() => {
+    const arr = [];
 
-  // ID (prefer propertyId if present)
-  if (has(property.propertyId || property.id)) {
-    details.push({
-      label: "Property ID",
-      value: String(property.propertyId || property.id),
-    });
-  }
+    if (has(p.propertyId || p.id)) {
+      arr.push({
+        label: "Property ID",
+        value: String(p.propertyId || p.id),
+      });
+    }
 
-  if (has(property.price)) {
-    details.push({ label: "Price", value: fmtMoney(property.price) });
-  }
+    if (has(p.price)) {
+      arr.push({ label: "Price", value: fmtMoney(p.price) ?? p.price });
+    }
 
-  // “Size in ft” → “Land Size”
-  if (has(property.sqft)) {
-    details.push({
-      label: "Land Size",
-      value: `${fmtInt(property.sqft) ?? property.sqft} sq ft`,
-    });
-  }
+    // “Size in ft” → “Land Size”
+    if (has(p.sqft)) {
+      arr.push({
+        label: "Land Size",
+        value: `${fmtInt(p.sqft) ?? p.sqft} sq ft`,
+      });
+    }
 
-  if (has(property.bath)) {
-    details.push({ label: "Bathrooms", value: fmtInt(property.bath) ?? property.bath });
-  }
+    if (has(p.bath)) {
+      arr.push({ label: "Bathrooms", value: fmtInt(p.bath) ?? p.bath });
+    }
 
-  if (has(property.bed)) {
-    details.push({ label: "Bedrooms", value: fmtInt(property.bed) ?? property.bed });
-  }
+    if (has(p.bed)) {
+      arr.push({ label: "Bedrooms", value: fmtInt(p.bed) ?? p.bed });
+    }
 
-  if (has(property.garages)) {
-    details.push({ label: "Garage", value: fmtInt(property.garages) ?? property.garages });
-  }
+    if (has(p.garages)) {
+      arr.push({ label: "Garage", value: fmtInt(p.garages) ?? p.garages });
+    }
 
-  if (has(property.garageSize)) {
-    details.push({
-      label: "Garage Size",
-      value: `${fmtInt(property.garageSize) ?? property.garageSize} sq ft`,
-    });
-  }
+    if (has(p.garageSize)) {
+      arr.push({
+        label: "Garage Size",
+        value: `${fmtInt(p.garageSize) ?? p.garageSize} sq ft`,
+      });
+    }
 
-  if (has(property.yearBuilding)) {
-    details.push({ label: "Year Built", value: property.yearBuilding });
-  }
+    if (has(p.yearBuilding)) {
+      arr.push({ label: "Year Built", value: p.yearBuilding });
+    }
 
-  if (has(property.propertyType)) {
-    details.push({ label: "Property Type", value: property.propertyType });
-  }
+    if (has(p.propertyType)) {
+      arr.push({ label: "Property Type", value: p.propertyType });
+    }
 
-  // Status: prefer explicit availability, else derive from forRent if present
-  if (has(property.availability)) {
-    details.push({ label: "Property Status", value: property.availability });
-  } else if (typeof property.forRent === "boolean") {
-    details.push({ label: "Property Status", value: property.forRent ? "For Rent" : "For Sale" });
-  }
+    // Status: prefer explicit availability, else derive from forRent if present
+    if (has(p.availability)) {
+      arr.push({ label: "Property Status", value: p.availability });
+    } else if (typeof p.forRent === "boolean") {
+      arr.push({ label: "Property Status", value: p.forRent ? "For Rent" : "For Sale" });
+    }
 
-  // Nothing to show? return null to avoid empty container
-  if (details.length === 0) return null;
+    return arr;
+  }, [
+    p.propertyId,
+    p.id,
+    p.price,
+    p.sqft,
+    p.bath,
+    p.bed,
+    p.garages,
+    p.garageSize,
+    p.yearBuilding,
+    p.propertyType,
+    p.availability,
+    p.forRent,
+  ]);
 
-  // Split into two columns (roughly even)
+  // Split into two columns (roughly even) – depends only on 'details'
   const { left, right } = useMemo(() => {
     const mid = Math.ceil(details.length / 2);
     return { left: details.slice(0, mid), right: details.slice(mid) };
   }, [details]);
+
+  // Nothing to show? Render nothing (after hooks have been called)
+  if (details.length === 0) return null;
 
   return (
     <div className="row">

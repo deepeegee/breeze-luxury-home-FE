@@ -2,7 +2,6 @@ import MobileMenu from "@/components/common/mobile-menu";
 import Hero from "@/components/home/home-v6/hero";
 import Footer from "@/components/home/home-v6/footer";
 import Header from "@/components/home/home-v6/Header";
-import Image from "next/image";
 import FindHomeBlock from "@/components/home/home-v6/FindHomeBlock";
 import FeatureProperties from "@/components/home/home-v6/FeatureProperties";
 import Testimonial from "@/components/home/home-v6/Testimonial";
@@ -77,7 +76,7 @@ const HomePage = () => {
             <div className="col-lg-6 mx-auto" data-aos-delay="300ms">
               <div className="main-title text-center">
                 <h2>Featured Properties</h2>
-                <p className="paragraph">Properties for sell and rent</p>
+                <p className="paragraph">Properties for sale and rent</p>
               </div>
             </div>
           </div>
@@ -98,7 +97,7 @@ const HomePage = () => {
               <div className="main-title" data-aos="fade-up" data-aos-delay="100">
                 <h2 className="title">Explore Cities</h2>
                 <p className="paragraph">
-                  Discover top-performing cities with high-growth potential. Whether you're buying
+                  Discover top-performing cities with high-growth potential. Whether you{"'"}re buying
                   your first home or expanding your investment portfolio, these locations offer the
                   perfect blend of lifestyle, infrastructure, and long-term value.
                 </p>

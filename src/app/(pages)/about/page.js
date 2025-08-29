@@ -2,7 +2,6 @@ import CallToActions from "@/components/common/CallToActions";
 import DefaultHeader from "@/components/common/DefaultHeader";
 import Footer from "@/components/common/default-footer";
 import MobileMenu from "@/components/common/mobile-menu";
-import Image from "next/image";
 import Link from "next/link";
 import styles from "./about.module.css";
 
@@ -41,7 +40,6 @@ const About = () => {
       <section className={`our-about pb90 ${styles.aboutSection}`}>
         <div className="container">
           <div className={styles.aboutGrid} data-aos="fade-up" data-aos-delay="300">
-
             {/* Main content */}
             <div className={styles.main}>
               <p className={styles.paragraph}>
@@ -74,7 +72,7 @@ const About = () => {
               </p>
 
               <p className={styles.paragraph}>
-                Whether you're purchasing your first home, expanding your investment portfolio, or
+                Whether you{"'"}re purchasing your first home, expanding your investment portfolio, or
                 seeking sound real estate advice, Breeze Luxury Homes Limited is your reliable
                 partner for smart and secure property solutions.
               </p>
@@ -85,7 +83,7 @@ const About = () => {
               <div className={styles.card}>
                 <h5 className="mb10">Vision Statement</h5>
                 <p className={styles.paragraph}>
-                  To become Nigeria’s most trusted real estate brand, known for legally secure
+                  To become Nigeria&rsquo;s most trusted real estate brand, known for legally secure
                   investments, professional portfolio management, and the development of modern,
                   luxury living spaces across Africa.
                 </p>
