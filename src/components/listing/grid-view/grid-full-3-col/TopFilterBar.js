@@ -8,8 +8,8 @@ import PriceRange from "../../sidebar/PriceRange";
 import Bedroom from "../../sidebar/Bedroom";
 import Bathroom from "../../sidebar/Bathroom";
 
-/* ---------- canonical type mapping ---------- */
-const TYPE_MAP = new Map([
+/* ---------- canonical type mapping (exported) ---------- */
+export const TYPE_MAP = new Map([
   ["fully-detached duplex", "Fully-Detached Duplex"],
   ["duplex", "Fully-Detached Duplex"],
   ["bungalow", "Bungalow"],
@@ -25,7 +25,7 @@ const TYPE_MAP = new Map([
   ["land", "Land & Plots"],
 ]);
 
-const canonType = (s) => {
+export const canonType = (s) => {
   const k = (s ?? "").toString().trim().toLowerCase();
   return TYPE_MAP.get(k) ?? s;
 };
@@ -33,6 +33,11 @@ const canonType = (s) => {
 export default function TopFilterBar({ setCurrentSortingOption, colstyle, setColstyle }) {
   const router = useRouter();
   const sp = useSearchParams();
+
+  const getNum = (v, fallback = undefined) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  };
 
   const updateQuery = (patch) => {
     const next = new URLSearchParams(sp?.toString() || "");
@@ -52,40 +57,64 @@ export default function TopFilterBar({ setCurrentSortingOption, colstyle, setCol
   };
 
   /* ---------- handlers for child widgets (apply immediately) ---------- */
-  const filterFunctions = useMemo(
-    () => ({
+  const filterFunctions = useMemo(() => {
+    // current values from URL (for components that need checked/selected state)
+    const currBeds = getNum(sp.get("beds"), 0);   // 0 = any
+    const currBaths = getNum(sp.get("baths"), 0);
+
+    const api = {
+      // status
       setStatus: (label) => {
         const val = (label || "").toString().toLowerCase();
-        // Store in query as: "for-sale" | "sold"
-        const qVal = val.includes("sold")
-          ? "sold"
-          : val.includes("sale") || val.includes("avail")
-          ? "for-sale"
-          : "";
+        const qVal =
+          val.includes("sold")
+            ? "sold"
+            : val.includes("sale") || val.includes("avail")
+            ? "for-sale"
+            : "";
         updateQuery({ status: qVal });
       },
+
+      // types
       setPropertyTypes: (types = []) => {
         const norm = (Array.isArray(types) ? types : [types])
           .map(canonType)
           .filter(Boolean);
         updateQuery({ type: norm });
       },
+
+      // price
       setPriceRange: ([min, max] = []) =>
-        updateQuery({
-          minPrice: min ?? "",
-          maxPrice: max ?? "",
-        }),
+        updateQuery({ minPrice: min ?? "", maxPrice: max ?? "" }),
+
+      // beds/baths (primary names)
       setBeds: (n) => updateQuery({ beds: n ?? "" }),
       setBaths: (n) => updateQuery({ baths: n ?? "" }),
+
+      // beds/baths (aliases used by existing child components)
+      handlebedrooms: (n) => updateQuery({ beds: n ?? "" }),
+      handlebathroms: (n) => updateQuery({ baths: n ?? "" }),
+
+      // expose current values (for checked= in Bedroom/Bathroom)
+      bedrooms: currBeds,
+      bathroms: currBaths,
+
+      // search box
       setQuery: (q) => updateQuery({ q }),
+
+      // reset
       clearAll: () => router.push("?", { scroll: false }),
-    }),
+      resetFilter: () => router.push("?", { scroll: false }),
+    };
+
+    return api;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [sp]
-  );
+  }, [sp]);
 
   const onSortChange = (val) => {
-    setCurrentSortingOption?.(val);
+    if (typeof setCurrentSortingOption === "function") {
+      setCurrentSortingOption(val);
+    }
     updateQuery({ sort: val });
   };
 
@@ -94,7 +123,7 @@ export default function TopFilterBar({ setCurrentSortingOption, colstyle, setCol
   const statusLabel =
     statusQ === "sold" ? "Sold" : statusQ === "for-sale" ? "For sale" : "Status";
 
-  const typeQ = sp.get("type"); // "A,B,C" or null
+  const typeQ = sp.get("type"); // e.g. "A,B,C"
   const typeArr = typeQ ? typeQ.split(",") : [];
   const typeLabel =
     typeArr.length === 0
@@ -244,13 +273,13 @@ export default function TopFilterBar({ setCurrentSortingOption, colstyle, setCol
 
           <div
             className={`pl15 pr15 bdrl1 bdrr1 d-none d-md-block cursor ${!colstyle ? "menuActive" : ""}`}
-            onClick={() => setColstyle?.(false)}
+            onClick={() => setColstyle && setColstyle(false)}
           >
             Grid
           </div>
           <div
             className={`pl15 d-none d-md-block cursor ${colstyle ? "menuActive" : ""}`}
-            onClick={() => setColstyle?.(true)}
+            onClick={() => setColstyle && setColstyle(true)}
           >
             List
           </div>
@@ -261,8 +290,13 @@ export default function TopFilterBar({ setCurrentSortingOption, colstyle, setCol
         .dropdown-menu {
           min-width: 260px;
         }
-        .px20 { padding-left: 20px; padding-right: 20px; }
-        .open-btn { white-space: nowrap; }
+        .px20 {
+          padding-left: 20px;
+          padding-right: 20px;
+        }
+        .open-btn {
+          white-space: nowrap;
+        }
       `}</style>
     </>
   );

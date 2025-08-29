@@ -19,7 +19,7 @@ const PriceRange = ({ filterFunctions = {} }) => {
     <div className="range-wrapper">
       <Slider
         range
-        max={100000}
+        max={1000000}
         min={0}
         value={price} // controlled instead of defaultValue
         onChange={handleOnChange}

@@ -1,6 +1,8 @@
-'use client'
+"use client";
 
-import React from "react";
+import React, { useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
 import SearchBox from "./SearchBox";
 import ListingStatus from "./ListingStatus";
 import PropertyType from "./PropertyType";
@@ -12,128 +14,134 @@ import SquareFeet from "./SquareFeet";
 import YearBuilt from "./YearBuilt";
 import OtherFeatures from "./OtherFeatures";
 
-const ListingSidebar = ({filterFunctions}) => {
+/* ---------- canonical type mapping ---------- */
+const TYPE_MAP = new Map([
+  ["fully-detached duplex", "Fully-Detached Duplex"],
+  ["duplex", "Fully-Detached Duplex"],
+  ["bungalow", "Bungalow"],
+  ["apartment", "Apartment"],
+  ["apartments", "Apartment"],
+  ["townhome", "Townhome"],
+  ["town home", "Townhome"],
+  ["office", "Office"],
+  ["offices", "Office"],
+  ["factory", "Factory"],
+  ["land & plots", "Land & Plots"],
+  ["land and plots", "Land & Plots"],
+  ["land", "Land & Plots"],
+]);
+
+const canonType = (s) => {
+  const k = (s ?? "").toString().trim().toLowerCase();
+  return TYPE_MAP.get(k) ?? s;
+};
+
+const ListingSidebar = () => {
+  const router = useRouter();
+  const sp = useSearchParams();
+
+  const updateQuery = (patch) => {
+    const next = new URLSearchParams(sp?.toString() || "");
+    Object.entries(patch).forEach(([k, v]) => {
+      if (
+        v === undefined ||
+        v === null ||
+        v === "" ||
+        (Array.isArray(v) && v.length === 0)
+      ) {
+        next.delete(k);
+      } else {
+        next.set(k, Array.isArray(v) ? v.join(",") : String(v));
+      }
+    });
+    router.push(`?${next.toString()}`, { scroll: false });
+  };
+
+  /* ---------- filter functions for all widgets ---------- */
+  const filterFunctions = useMemo(
+    () => ({
+      setStatus: (label) => {
+        const val = (label || "").toString().toLowerCase();
+        const qVal = val.includes("sold")
+          ? "sold"
+          : val.includes("sale") || val.includes("avail")
+          ? "for-sale"
+          : "";
+        updateQuery({ status: qVal });
+      },
+      setPropertyTypes: (types = []) => {
+        const norm = (Array.isArray(types) ? types : [types])
+          .map(canonType)
+          .filter(Boolean);
+        updateQuery({ type: norm });
+      },
+      setPriceRange: ([min, max] = []) =>
+        updateQuery({ minPrice: min ?? "", maxPrice: max ?? "" }),
+      setBeds: (n) => updateQuery({ beds: n ?? "" }),
+      setBaths: (n) => updateQuery({ baths: n ?? "" }),
+      setQuery: (q) => updateQuery({ q }),
+      setLocation: (loc) => updateQuery({ location: loc }),
+      setSquareFeet: ([min, max] = []) =>
+        updateQuery({ minSqft: min ?? "", maxSqft: max ?? "" }),
+      setYearBuilt: ([min, max] = []) =>
+        updateQuery({ minYear: min ?? "", maxYear: max ?? "" }),
+      setOtherFeatures: (features = []) =>
+        updateQuery({ features: features.join(",") }),
+      clearAll: () => router.push("?", { scroll: false }),
+    }),
+    [sp]
+  );
+
   return (
     <div className="list-sidebar-style1">
       <div className="widget-wrapper">
         <h6 className="list-title">Find your home</h6>
         <SearchBox filterFunctions={filterFunctions} />
       </div>
-      {/* End .widget-wrapper */}
 
       <div className="widget-wrapper">
         <h6 className="list-title">Listing Status</h6>
-        <div className="radio-element">
-          <ListingStatus filterFunctions={filterFunctions} />
-        </div>
+        <ListingStatus filterFunctions={filterFunctions} />
       </div>
-      {/* End .widget-wrapper */}
 
       <div className="widget-wrapper">
         <h6 className="list-title">Property Type</h6>
-        <div className="checkbox-style1">
-          <PropertyType filterFunctions={filterFunctions} />
-        </div>
+        <PropertyType filterFunctions={filterFunctions} />
       </div>
-      
-      {/* End .widget-wrapper */}
 
       <div className="widget-wrapper">
         <h6 className="list-title">Price Range</h6>
-        {/* Range Slider Desktop Version */}
-        <div className="range-slider-style1">
-          <PriceSlider filterFunctions={filterFunctions} />
-        </div>
+        <PriceSlider filterFunctions={filterFunctions} />
       </div>
-      {/* End .widget-wrapper */}
 
       <div className="widget-wrapper">
         <h6 className="list-title">Bedrooms</h6>
-        <div className="d-flex">
-          <Bedroom filterFunctions={filterFunctions} />
-        </div>
+        <Bedroom filterFunctions={filterFunctions} />
       </div>
-      {/* End .widget-wrapper */}
 
       <div className="widget-wrapper">
         <h6 className="list-title">Bathrooms</h6>
-        <div className="d-flex">
-          <Bathroom filterFunctions={filterFunctions}  />
-        </div>
+        <Bathroom filterFunctions={filterFunctions} />
       </div>
-      {/* End .widget-wrapper */}
 
-      <div className="widget-wrapper advance-feature-modal">
+      <div className="widget-wrapper">
         <h6 className="list-title">Location</h6>
-        <div className="form-style2 input-group">
-          <Location filterFunctions={filterFunctions} />
-        </div>
+        <Location filterFunctions={filterFunctions} />
       </div>
-      {/* End .widget-wrapper */}
 
       <div className="widget-wrapper">
         <h6 className="list-title">Square Feet</h6>
-        <SquareFeet filterFunctions={filterFunctions}/>
+        <SquareFeet filterFunctions={filterFunctions} />
       </div>
-      {/* End .widget-wrapper */}
 
       <div className="widget-wrapper">
         <h6 className="list-title">Year Built</h6>
-        <YearBuilt filterFunctions={filterFunctions}/>
+        <YearBuilt filterFunctions={filterFunctions} />
       </div>
-      {/* End .widget-wrapper */}
 
       <div className="widget-wrapper">
-        <div className="feature-accordion">
-          <div className="accordion" id="accordionExample">
-            <div className="accordion-item border-none">
-              <h2 className="accordion-header" id="headingOne">
-                <button
-                  className="accordion-button border-none p-0 after-none feature-button"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#collapseOne"
-                  aria-expanded="true"
-                  aria-controls="collapseOne"
-                >
-                  <span className="flaticon-settings" /> Other Features
-                </button>
-              </h2>
-              <div
-                id="collapseOne"
-                className="accordion-collapse collapse"
-                aria-labelledby="headingOne"
-                data-bs-parent="#accordionExample"
-              >
-                <div className="accordion-body p-0 mt15">
-                  <OtherFeatures filterFunctions={filterFunctions} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* End .widget-wrapper */}
-
-      <div className="widget-wrapper mb20">
-        <div className="btn-area d-grid align-items-center">
-          <button className="ud-btn btn-thm">
-            <span className="flaticon-search align-text-top pr10" />
-            Search
-          </button>
-        </div>
-      </div>
-      {/* End .widget-wrapper */}
-
-      <div className="reset-area d-flex align-items-center justify-content-between">
-        <div onClick={()=>filterFunctions.resetFilter()} className="reset-button cursor" href="#">
-          <span className="flaticon-turn-back" />
-          <u>Reset all filters</u>
-        </div>
-        <a className="reset-button" href="#">
-          <span className="flaticon-favourite" />
-          <u>Save Search</u>
-        </a>
+        <h6 className="list-title">Other Features</h6>
+        <OtherFeatures filterFunctions={filterFunctions} />
       </div>
     </div>
   );

@@ -22,7 +22,7 @@ const Bathroom = ({filterFunctions}) => {
             type="radio"
             checked={filterFunctions?.bathroms == option.value}
             
-            onChange={()=>filterFunctions?.handlebathroms(option.value)}
+            onChange={()=>filterFunctions?.setBaths(option.value)}
             
           />
           <label htmlFor={option.id}>{option.label}</label>

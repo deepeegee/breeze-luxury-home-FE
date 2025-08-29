@@ -67,9 +67,9 @@ export default function Category() {
 
         /* Card base */
         .pt-card {
-          gap: 10px;
-          min-height: 48px;
-          padding: clamp(10px, 2.5vw, 16px); /* tighter on small, comfy on lg */
+          gap: 8px;
+          min-height: 36px; /* Reduced from 48px */
+          padding: 8px; /* Reduced mobile padding */
           transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
         }
         .pt-card:hover {
@@ -83,10 +83,10 @@ export default function Category() {
           box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 30%, transparent);
         }
 
-        /* Icon stays neutral */
+        /* Icon - smaller on mobile */
         .icon-wrap {
-          width: clamp(26px, 5.8vw, 32px);
-          height: clamp(26px, 5.8vw, 32px);
+          width: 24px; /* Reduced from clamp(26px, 5.8vw, 32px) */
+          height: 24px;
           border-radius: 999px;
           display: inline-flex;
           align-items: center;
@@ -94,25 +94,27 @@ export default function Category() {
           background: var(--chip-bg);
           flex: 0 0 auto;
         }
-        .icon { font-size: clamp(18px, 4.8vw, 22px); color: var(--icon); }
+        .icon { 
+          font-size: 14px; /* Reduced from clamp(18px, 4.8vw, 22px) */
+          color: var(--icon); 
+        }
         .icon-img { object-fit: contain; width: 100%; height: 100%; }
 
-        /* Text scales & wraps */
+        /* Text - smaller on mobile */
         .label-container {
-          min-width: 0; /* allow text to shrink/wrap */
+          min-width: 0;
           display: flex;
           align-items: center;
         }
         .label-text {
           font-weight: 600;
-          font-size: clamp(14px, 3.8vw, 16px);
+          font-size: 12px; /* Reduced from clamp(14px, 3.8vw, 16px) */
           line-height: 1.15;
           color: var(--ink);
-          /* Desktop: single line ellipsis; Mobile: allow 2 lines */
           display: -webkit-box;
           -webkit-box-orient: vertical;
           overflow: hidden;
-          -webkit-line-clamp: 1;
+          -webkit-line-clamp: 2; /* Allow 2 lines on mobile */
           white-space: normal;
         }
 
@@ -128,17 +130,63 @@ export default function Category() {
             flex: 0 0 100%;
             max-width: 100%;
           }
+          .pt-card {
+            padding: 6px; /* Even smaller padding on very small screens */
+            gap: 6px;
+          }
+          .icon-wrap {
+            width: 20px;
+            height: 20px;
+          }
+          .icon { font-size: 12px; }
+          .label-text { font-size: 11px; }
         }
 
-        /* Phones: let labels take two lines for long text */
-        @media (max-width: 576px) {
-          .label-text { -webkit-line-clamp: 2; }
-          .pt-card { gap: 8px; }
+        /* Small phones: maintain small sizes */
+        @media (min-width: 361px) and (max-width: 576px) {
+          .pt-card {
+            padding: 8px;
+            gap: 7px;
+          }
+          .icon-wrap {
+            width: 22px;
+            height: 22px;
+          }
+          .icon { font-size: 13px; }
+          .label-text { font-size: 12px; }
         }
 
-        /* Tablets: comfy spacing, three in a row already via col-md-4 */
-        @media (min-width: 768px) and (max-width: 991.98px) {
-          .pt-card { padding: 14px; }
+        /* Tablets: start scaling up */
+        @media (min-width: 577px) and (max-width: 991.98px) {
+          .pt-card { 
+            padding: 12px;
+            gap: 9px;
+            min-height: 42px;
+          }
+          .icon-wrap {
+            width: 28px;
+            height: 28px;
+          }
+          .icon { font-size: 16px; }
+          .label-text { 
+            font-size: 14px;
+            -webkit-line-clamp: 1; /* Single line on tablets+ */
+          }
+        }
+
+        /* Desktop: full size */
+        @media (min-width: 992px) {
+          .pt-card { 
+            padding: 16px;
+            gap: 10px;
+            min-height: 48px;
+          }
+          .icon-wrap {
+            width: 32px;
+            height: 32px;
+          }
+          .icon { font-size: 18px; }
+          .label-text { font-size: 16px; }
         }
 
         /* Reduce motion preference */
