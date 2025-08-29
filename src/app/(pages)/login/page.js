@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import LoginClientWrapper from "@/components/common/login-signup-modal/LoginClientWrapper";
@@ -6,7 +7,10 @@ export const metadata = {
   title: "Login  ||  Breeze Luxury Homes",
 };
 
-const Login = () => {
+// Make sure this page isn't prerendered statically (auth pages usually shouldn't be)
+export const dynamic = "force-dynamic"; // or: export const revalidate = 0;
+
+export default function Login() {
   return (
     <section className="our-compare pt60 pb60">
       <Image
@@ -37,13 +41,15 @@ const Login = () => {
                   Sign in with this account across the following sites.
                 </p>
               </div>
-              <LoginClientWrapper />
+
+              {/Wrap the client component (uses useSearchParams) in Suspense */}
+              <Suspense fallback={<div>Loading sign-in…</div>}>
+                <LoginClientWrapper />
+              </Suspense>
             </div>
           </div>
         </div>
       </div>
     </section>
   );
-};
-
-export default Login;
+}
