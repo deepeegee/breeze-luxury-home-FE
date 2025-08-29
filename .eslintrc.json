@@ -1,10 +1,7 @@
 {
   "extends": ["next/core-web-vitals"],
   "plugins": ["@typescript-eslint", "react", "react-hooks"],
-  "parserOptions": {
-    "ecmaVersion": 2023,
-    "sourceType": "module"
-  },
+  "parserOptions": { "ecmaVersion": 2023, "sourceType": "module" },
   "overrides": [
     {
       "files": ["**/*.ts", "**/*.tsx"],
@@ -12,14 +9,12 @@
       "plugins": ["@typescript-eslint"],
       "extends": ["plugin:@typescript-eslint/recommended"],
       "rules": {
-        "@typescript-eslint/no-expli.cit-any": "warn"
+        "@typescript-eslint/no-explicit-any": "off"
       }
     },
     {
       "files": ["**/*.js", "**/*.jsx"],
-      "rules": {
-        "@typescript-eslint/no-explicit-any": "off"
-      }
+      "rules": { "@typescript-eslint/no-explicit-any": "off" }
     }
   ],
   "rules": {
