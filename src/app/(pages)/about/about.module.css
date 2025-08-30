@@ -1,7 +1,8 @@
 /* ---------- Breadcrumb (no theme background, tight spacing) ---------- */
 .breadcrumbSection {
     padding: 12px 0 0;     /* small top padding; no bottom padding */
-    margin: 0;             /* remove any section margin */
+    margin: 0;  
+    margin-top: 60px;           /* remove any section margin */
   }
   
   .breadcrumb {
@@ -10,7 +11,8 @@
   }
   
   .breadcrumbNav {
-    margin-top: 2px;
+    margin-top: 60px;           /* remove any section margin */
+
   }
   
   .breadcrumbList {

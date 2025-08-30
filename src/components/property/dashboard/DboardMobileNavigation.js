@@ -52,7 +52,7 @@ const DboardMobileNavigation = () => {
         },
         {
           href: "/dashboard-my-blogs",
-          icon: "flaticon-home",
+          icon: "flaticon-pencil",
           text: "My Blogs",
         },
       ],

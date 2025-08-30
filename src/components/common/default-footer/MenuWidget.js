@@ -11,7 +11,7 @@ const MenuWidget = () => {
         { label: "About Us", href: "/about" },
         { label: "Blog", href: "/blog" },
         { label: "Contact", href: "/contact" },
-        { label: "Terms of Use", href: "/legal/terms" },
+        // { label: "Terms of Use", href: "/legal/terms" },
       ],
     },
     {

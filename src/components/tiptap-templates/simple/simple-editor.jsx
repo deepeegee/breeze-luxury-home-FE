@@ -27,24 +27,19 @@ import {
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension";
 import { HorizontalRule } from "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node-extension";
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
-import "@/components/tiptap-node/code-block-node/code-block-node.scss";
 import "@/components/tiptap-node/horizontal-rule-node/horizontal-rule-node.scss";
 import "@/components/tiptap-node/list-node/list-node.scss";
 import "@/components/tiptap-node/image-node/image-node.scss";
-import "@/components/tiptap-node/heading-node/heading-node.scss";
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
 
 /* Template UI bits */
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu";
 import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button";
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu";
-import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button";
-import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button";
 import { ColorHighlightPopover } from "@/components/tiptap-ui/color-highlight-popover";
 import { LinkPopover } from "@/components/tiptap-ui/link-popover";
 import { MarkButton } from "@/components/tiptap-ui/mark-button";
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button";
-import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button";
 
 /* Upload helper (fallback) */
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils";
@@ -56,16 +51,16 @@ import "@/components/tiptap-templates/simple/simple-editor.scss";
 const MainToolbarContent = () => (
   <>
     <Spacer />
-    <ToolbarGroup>
+    {/* <ToolbarGroup>
       <UndoRedoButton action="undo" />
       <UndoRedoButton action="redo" />
-    </ToolbarGroup>
+    </ToolbarGroup> */}
     <ToolbarSeparator />
     <ToolbarGroup>
       <HeadingDropdownMenu levels={[1, 2, 3, 4]} />
       <ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} />
-      <BlockquoteButton />
-      <CodeBlockButton />
+      {/* <BlockquoteButton /> */}
+      {/* <CodeBlockButton /> */}
     </ToolbarGroup>
     <ToolbarSeparator />
     <ToolbarGroup>

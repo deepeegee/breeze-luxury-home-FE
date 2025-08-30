@@ -1,14 +1,13 @@
 import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import LoginClientWrapper from "@/components/common/login-signup-modal/LoginClientWrapper";
+import LoginClientWrapper from "@/components/common/login-signup-modal/LoginClientWrapper";  // Import directly
 
 export const metadata = {
   title: "Login  ||  Breeze Luxury Homes",
 };
 
-// Make sure this page isn't prerendered statically (auth pages usually shouldn't be)
-export const dynamic = "force-dynamic"; // or: export const revalidate = 0;
+export const dynamic = "force-dynamic"; // Keep this for dynamic rendering of the page.
 
 export default function Login() {
   return (
@@ -42,7 +41,7 @@ export default function Login() {
                 </p>
               </div>
 
-              {/Wrap the client component (uses useSearchParams) in Suspense */}
+              {/* Wrap the client component (uses useSearchParams) in Suspense */}
               <Suspense fallback={<div>Loading sign-in…</div>}>
                 <LoginClientWrapper />
               </Suspense>
