@@ -74,7 +74,7 @@ const About = () => {
               </p>
 
               <p className={styles.paragraph}>
-                Whether you're purchasing your first home, expanding your investment portfolio, or
+                Whether you&apos;re purchasing your first home, expanding your investment portfolio, or
                 seeking sound real estate advice, Breeze Luxury Homes Limited is your reliable
                 partner for smart and secure property solutions.
               </p>
@@ -85,7 +85,7 @@ const About = () => {
               <div className={styles.card}>
                 <h5 className="mb10">Vision Statement</h5>
                 <p className={styles.paragraph}>
-                  To become Nigeria’s most trusted real estate brand, known for legally secure
+                  To become Nigeria&apos;s most trusted real estate brand, known for legally secure
                   investments, professional portfolio management, and the development of modern,
                   luxury living spaces across Africa.
                 </p>
