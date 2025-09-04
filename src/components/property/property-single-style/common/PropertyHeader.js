@@ -1,11 +1,16 @@
+// src/components/property/property-single-style/common/PropertyHeader.jsx
 "use client";
 
 import React, { useMemo, useState } from "react";
 import { Tooltip as ReactTooltip } from "react-tooltip";
 
+const BUSINESS_WA = "2348148827901";
+
 /* ---------- helpers ---------- */
 function deriveAvailability(p = {}) {
-  const raw = (p.availability || p.status || p.listedIn || "").toString().toLowerCase();
+  const raw = (p.availability || p.status || p.listedIn || "")
+    .toString()
+    .toLowerCase();
   if (raw.includes("sold")) return "Sold";
   if (raw.includes("available") || raw.includes("active") || raw.includes("publish")) return "For sale";
   if (typeof p.forRent === "boolean") return p.forRent ? "For rent" : "For sale";
@@ -18,9 +23,67 @@ function availabilityClasses(avail) {
   return "text-success";
 }
 
+const formatNaira = (n) =>
+  typeof n === "number" && Number.isFinite(n)
+    ? `₦${n.toLocaleString("en-NG")}`
+    : "";
+
+/** Normalize documents from various BE shapes -> string[] */
+function normalizeDocuments(p = {}) {
+  const candidates = [
+    p.propertyDocuments,
+    p.documents,
+    p.legalDocuments,
+    p.docs,
+  ];
+
+  const out = [];
+
+  for (const v of candidates) {
+    if (!v) continue;
+
+    // Array of strings?
+    if (Array.isArray(v)) {
+      for (const item of v) {
+        if (typeof item === "string" && item.trim()) out.push(item.trim());
+        // Array of objects? pick label/name/title if present
+        else if (item && typeof item === "object") {
+          const s =
+            item.label ||
+            item.name ||
+            item.title ||
+            item.text ||
+            item.value ||
+            "";
+          if (typeof s === "string" && s.trim()) out.push(s.trim());
+        }
+      }
+      continue;
+    }
+
+    // CSV string
+    if (typeof v === "string" && v.trim()) {
+      v.split(/[;,]/).forEach((part) => {
+        const s = part.trim();
+        if (s) out.push(s);
+      });
+    }
+  }
+
+  // de-dupe case-insensitively but keep first-cased original
+  const seen = new Set();
+  const deduped = [];
+  for (const s of out) {
+    const k = s.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    deduped.push(s);
+  }
+  return deduped;
+}
+
 /* ---------- component ---------- */
 const PropertyHeader = ({ property }) => {
-  // Always call hooks; use a safe fallback object and a flag for UI
   const hasProperty = !!property;
   const p = property ?? {};
 
@@ -35,10 +98,42 @@ const PropertyHeader = ({ property }) => {
     []
   );
 
-  const whatsappHref = useMemo(() => {
-    const msg = `${p.title ?? "Property"} — ${pageUrl}`;
-    return `https://wa.me/?text=${encodeURIComponent(msg)}`;
-  }, [pageUrl, p.title]);
+  // Build a property-specific contact message (to chat with your biz number)
+  const waContactHref = useMemo(() => {
+    const title = p.title || p.name || "a property";
+    const location = p.location || [p.city, p.state].filter(Boolean).join(", ");
+    const price = formatNaira(p.price);
+
+    const lines = [
+      "Hello Breeze Luxury Homes",
+      "I'm interested in this property:",
+      `• Title: ${title}`,
+      location ? `• Location: ${location}` : null,
+      price ? `• Price: ${price}` : null,
+      pageUrl ? `• Link: ${pageUrl}` : null,
+      "",
+      "Please share more details. Thank you!",
+    ].filter(Boolean);
+
+    return `https://wa.me/${BUSINESS_WA}?text=${encodeURIComponent(lines.join("\n"))}`;
+  }, [p.title, p.name, p.location, p.city, p.state, p.price, pageUrl]);
+
+  // Share-with-a-friend message
+  const waShareHref = useMemo(() => {
+    const title = p.title || p.name || "this property";
+    const location = p.location || [p.city, p.state].filter(Boolean).join(", ");
+    const price = formatNaira(p.price);
+
+    const lines = [
+      "Check out this property on Breeze Luxury Homes:",
+      title,
+      location ? `Location: ${location}` : null,
+      price ? `Price: ${price}` : null,
+      pageUrl || "",
+    ].filter(Boolean);
+
+    return `https://wa.me/?text=${encodeURIComponent(lines.join("\n"))}`;
+  }, [p.title, p.name, p.location, p.city, p.state, p.price, pageUrl]);
 
   const onCopy = async () => {
     try {
@@ -56,12 +151,17 @@ const PropertyHeader = ({ property }) => {
 
   const propertyType = p.propertyType || p.category || "";
 
+  // 🔹 Documents from BE (robust)
+  const docs = useMemo(() => normalizeDocuments(p), [p]);
+
   return (
     <>
       <div className="col-lg-8">
         <div className="single-property-content mb30-md">
           {/* Title */}
-          <h2 className="sp-lg-title">{hasProperty ? p.title : "Property not found"}</h2>
+          <h2 className="sp-lg-title">
+            {hasProperty ? p.title : "Property not found"}
+          </h2>
 
           {/* Address + availability + year */}
           <div className="pd-meta mb15 d-md-flex align-items-center">
@@ -111,16 +211,23 @@ const PropertyHeader = ({ property }) => {
             )}
           </div>
 
-          {/* NEW: Documents row */}
-          <div className="mt15 pt15 border-top">
-            <div className="fz13 text-uppercase fw600 mb5 text-muted">Documents</div>
-            <div className="d-flex flex-wrap align-items-center gap-2">
-              <span className="badge bg-success-subtle text-success-emphasis fz12 px-2 py-1">
-                <i className="far fa-file-alt pe-2 align-text-top" />
-                C of O
-              </span>
+          {/* 🔹 Documents row — shows when BE provides docs */}
+          {docs.length > 0 && (
+            <div className="mt15 pt15 border-top">
+              <div className="fz13 text-uppercase fw600 mb5 text-muted">Documents</div>
+              <div className="d-flex flex-wrap align-items-center gap-2">
+                {docs.map((d, i) => (
+                  <span
+                    key={`${d}-${i}`}
+                    className="badge bg-success-subtle text-success-emphasis fz12 px-2 py-1"
+                  >
+                    <i className="far fa-file-alt pe-2 align-text-top" />
+                    {d}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Local styles for the identity pills */}
           <style jsx>{`
@@ -160,13 +267,13 @@ const PropertyHeader = ({ property }) => {
         <div className="single-property-content position-relative">
           <div className="property-action text-lg-end">
             <div className="d-flex mb20 mb10-md align-items-center justify-content-lg-end position-relative">
-              {/* WhatsApp */}
+              {/* WhatsApp (contact us about THIS property) */}
               <a
                 className="icon mr10"
-                href={whatsappHref}
+                href={waContactHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label="Share on WhatsApp"
+                aria-label="Message us on WhatsApp about this property"
                 data-tooltip-id="tip-wa"
               >
                 <i className="fab fa-whatsapp" style={{ fontSize: 18, color: "#25D366" }} />
@@ -190,13 +297,13 @@ const PropertyHeader = ({ property }) => {
               </button>
 
               {/* Tooltips */}
-              <ReactTooltip id="tip-wa" place="bottom" content="Share on WhatsApp" />
+              <ReactTooltip id="tip-wa" place="bottom" content="Message us on WhatsApp" />
               <ReactTooltip id="tip-share" place="bottom" content="More share options" />
               <ReactTooltip id="tip-print" place="bottom" content="Print this property" />
             </div>
 
             <h3 className="price mb-0">
-              {typeof p.price === "number" ? `₦${p.price.toLocaleString()}` : "—"}
+              {typeof p.price === "number" ? formatNaira(p.price) : "—"}
             </h3>
           </div>
 
@@ -210,34 +317,65 @@ const PropertyHeader = ({ property }) => {
             >
               <div className="d-flex align-items-center justify-content-between mb10">
                 <div className="fw600">Share</div>
-                <button type="button" className="btn-close" aria-label="Close" onClick={() => setShareOpen(false)} />
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label="Close"
+                  onClick={() => setShareOpen(false)}
+                />
               </div>
 
-              {/* Copy link row */}
-              <div className="d-flex gap-3 mb10">
+              {/* Copy link row (keep button square-ish, no pill) */}
+              <div className="d-flex align-items-center gap-2 mb10" style={{ minWidth: 0 }}>
                 <input
                   type="text"
-                  className="form-control form-control-sm"
+                  className="form-control form-control-sm flex-grow-1"
                   readOnly
                   value={pageUrl}
+                  title={pageUrl}
                   onFocus={(e) => e.currentTarget.select()}
+                  style={{ minWidth: 0 }}
                 />
-                <button type="button" className="ud-btn btn-light btn-sm " onClick={onCopy}>
+                <button
+                  type="button"
+                  onClick={() => onCopy()}
+                  className="ud-btn btn-light btn-sm text-nowrap flex-shrink-0"
+                  style={{
+                    padding: "8px 12px",
+                    fontSize: 12,
+                    lineHeight: 1.2,
+                    borderRadius: "0.375rem",
+                  }}
+                >
                   {copied ? "Copied" : "Copy"}
                 </button>
               </div>
 
+              {/* 1) Contact us (business WA) */}
               <a
-                className="ud-btn btn-thm btn-sm w-100 d-inline-flex align-items-center justify-content-center"
-                href={whatsappHref}
+                className="ud-btn btn-outline-thm btn-sm w-100 d-inline-flex align-items-center justify-content-center mb10"
+                href={waContactHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                data-tooltip-id="tip-wa-sheet"
+                data-tooltip-id="tip-wa-sheet-1"
+              >
+                <i className="fab fa-whatsapp me-2" />
+                Message us on WhatsApp
+              </a>
+              <ReactTooltip id="tip-wa-sheet-1" place="bottom" content="Open WhatsApp chat with Breeze" />
+
+              {/* 2) Share with a friend */}
+              <a
+                className="ud-btn btn-thm btn-sm w-100 d-inline-flex align-items-center justify-content-center"
+                href={waShareHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-tooltip-id="tip-wa-sheet-2"
               >
                 <i className="fab fa-whatsapp me-2" />
                 Share via WhatsApp
               </a>
-              <ReactTooltip id="tip-wa-sheet" place="bottom" content="Open WhatsApp to share" />
+              <ReactTooltip id="tip-wa-sheet-2" place="bottom" content="Share this property" />
             </div>
           )}
         </div>

@@ -71,6 +71,15 @@ export type Listing = {
   lat?: number;
   long?: number;
   features?: string[];
+
+  /* ---------- NEW: document fields (optional, pass-through) ---------- */
+  propertyDocuments?: (
+    | string
+    | { label?: string; name?: string; title?: string; value?: string; text?: string }
+  )[];
+  documents?: string[];
+  legalDocuments?: string[];
+  docs?: string[];
 };
 
 export type Blog = {
@@ -173,6 +182,15 @@ export type PropertyBE = {
   // timestamps
   createdAt?: string;
   updatedAt?: string;
+
+  /* ---------- NEW: document fields from BE (optional) ---------- */
+  propertyDocuments?: (
+    | string
+    | { label?: string; name?: string; title?: string; value?: string; text?: string }
+  )[];
+  documents?: string[];
+  legalDocuments?: string[];
+  docs?: string[];
 };
 
 /* ========= NEW: analytics types ========= */
@@ -469,6 +487,12 @@ function toListing(p: PropertyBE): Listing {
     lat: p.lat,
     long: p.long,
     features: p.amenities,
+
+    /* ---------- NEW: pass-through document arrays if present ---------- */
+    propertyDocuments: Array.isArray(p.propertyDocuments) ? p.propertyDocuments : undefined,
+    documents: Array.isArray((p as any).documents) ? (p as any).documents : undefined,
+    legalDocuments: Array.isArray((p as any).legalDocuments) ? (p as any).legalDocuments : undefined,
+    docs: Array.isArray((p as any).docs) ? (p as any).docs : undefined,
   };
 }
 

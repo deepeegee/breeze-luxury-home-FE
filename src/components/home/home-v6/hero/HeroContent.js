@@ -24,7 +24,7 @@ const HeroContent = () => {
     // qs.set("status", activeTab === "rent" ? "Rent" : "Buy");
     // ---------------------------------------------------------------
 
-    router.push(`/grid-full-3-col?${qs.toString()}`);
+    router.push(`/properties?${qs.toString()}`);
   };
 
   const onSubmit = (e) => {

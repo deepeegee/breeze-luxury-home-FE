@@ -22,12 +22,12 @@ const About = () => {
           <div className="row">
             <div className="col-lg-12">
               <div className={styles.breadcrumb}>
-                <nav aria-label="Breadcrumb" className={styles.breadcrumbNav}>
+                {/* <nav aria-label="Breadcrumb" className={styles.breadcrumbNav}>
                   <ol className={styles.breadcrumbList}>
                     <li><Link href="/">Home</Link></li>
                     <li aria-current="page">About</li>
                   </ol>
-                </nav>
+                </nav> */}
                 <h1 className={styles.breadcrumbTitle}>
                   About Breeze Luxury Homes Limited
                 </h1>

@@ -158,7 +158,7 @@ const PersonalInfo = () => {
             <textarea
               cols={30}
               rows={4}
-              placeholder="There are many variations of passages."
+              placeholder=""
               defaultValue={""}
             />
           </div>

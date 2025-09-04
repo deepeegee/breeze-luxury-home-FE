@@ -5,7 +5,7 @@ export const homeItems = [
 export const listingItems = [
   {
     submenu: [
-      { label: "Grid Full Width 3 Cols", href: "/grid-full-3-col" },
+      { label: "Properties", href: "/properties" },
     ],
   },
 ];
@@ -13,7 +13,7 @@ export const listingItems = [
 
 
 export const blogItems = [
-  { href: "/blog-list-v3", label: "Blog List V3" },
+  { href: "/blog-list", label: "Blog List" },
 ];
 
 export const pageItems = [

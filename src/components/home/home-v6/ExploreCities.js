@@ -18,7 +18,7 @@ export default function ExploreCities() {
         return (
           <div key={c.name} className={`col-12 col-md-6 ${lg}`}>
             <Link
-              href={`/grid-full-3-col?location=${encodeURIComponent(c.name)}`}
+              href={`/properties?location=${encodeURIComponent(c.name)}`}
               className="city-card d-block"
               aria-label={`See properties in ${c.name}`}
               tabIndex={0}

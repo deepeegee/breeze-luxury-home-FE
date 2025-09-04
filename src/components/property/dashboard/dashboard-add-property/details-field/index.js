@@ -21,7 +21,7 @@ const DetailsFiled = () => {
         </div>
 
         {/* Rooms (optional) */}
-        <div className="col-sm-6 col-xl-4">
+        {/* <div className="col-sm-6 col-xl-4">
           <div className="mb20">
             <label className="heading-color ff-heading fw600 mb10">Rooms</label>
             <input
@@ -32,7 +32,7 @@ const DetailsFiled = () => {
               name="rooms"
             />
           </div>
-        </div>
+        </div> */}
 
         {/* Bedrooms (required) */}
         <div className="col-sm-6 col-xl-4">

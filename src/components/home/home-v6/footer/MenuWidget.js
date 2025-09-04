@@ -18,7 +18,7 @@ const MenuWidget = () => {
       // city links pass a location param into the grid page
       links: CITIES.map((name) => ({
         label: name,
-        href: `/grid-full-3-col?location=${encodeURIComponent(name)}`,
+        href: `/properties?location=${encodeURIComponent(name)}`,
       })),
     },
   ];

@@ -1,8 +1,8 @@
 const mobileMenuItems = [
   { label: "Home", path: "/" },
   { label: "About Us", path: "/about" },
-  { label: "Properties", path: "/grid-full-3-col" },
-  { label: "Blog", path: "/blog-list-v3" },
+  { label: "Properties", path: "/properties" },
+  { label: "Blog", path: "/blog-list" },
   { label: "Contact Us", path: "/contact" },
   // { label: "Compate", path: "/compare" },   // OG label kept
   // { label: "Pricing", path: "/pricing" },

@@ -55,7 +55,7 @@ const Form = () => {
             <textarea
               cols={30}
               rows={4}
-              placeholder="There are many variations of passages."
+              placeholder=""
               defaultValue={""}
               required
             />

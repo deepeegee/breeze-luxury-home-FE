@@ -1,7 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import Select from "react-select";
-import { CATEGORY_OPTIONS } from "@/constants/propertyOptions";
+import { CATEGORY_OPTIONS, DOCUMENT_GROUPS } from "@/constants/propertyOptions";
+
+const slug = (s) =>
+  String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 const PropertyDescription = () => {
   const listedInOptions = [
@@ -54,7 +57,7 @@ const PropertyDescription = () => {
             />
           </div>
         </div>
-        
+
         {/* Marketing / display name (optional) */}
         <div className="col-sm-12">
           <div className="mb20">
@@ -69,6 +72,7 @@ const PropertyDescription = () => {
             />
           </div>
         </div>
+
         {/* Description */}
         <div className="col-sm-12">
           <div className="mb20">
@@ -80,21 +84,6 @@ const PropertyDescription = () => {
               rows={5}
               placeholder="Describe the property..."
               name="description"
-            />
-          </div>
-        </div>
-
-        {/* Property ID (optional but useful) */}
-        <div className="col-sm-6 col-xl-4">
-          <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">
-              Property ID (optional)
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="e.g., BL001"
-              name="propertyId"
             />
           </div>
         </div>
@@ -121,35 +110,6 @@ const PropertyDescription = () => {
                       : null
                   }
                   onChange={(opt) => setCategory(opt?.value ?? "")}
-                  isClearable
-                />
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Listed in */}
-        <div className="col-sm-6 col-xl-4">
-          <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">
-              Listed in
-            </label>
-            <div className="location-area">
-              {showSelect && (
-                <Select
-                  inputId="listedIn"
-                  options={listedInOptions}
-                  styles={customStyles}
-                  className="select-custom pl-0"
-                  classNamePrefix="select"
-                  placeholder="Select listing state"
-                  value={
-                    listedIn
-                      ? listedInOptions.find((o) => o.value === listedIn) ||
-                        null
-                      : null
-                  }
-                  onChange={(opt) => setListedIn(opt?.value ?? "")}
                   isClearable
                 />
               )}
@@ -189,7 +149,7 @@ const PropertyDescription = () => {
         <div className="col-sm-6 col-xl-4">
           <div className="mb30">
             <label className="heading-color ff-heading fw600 mb10">
-              Price (₦ or $)
+              Price (₦)
             </label>
             <input
               type="number"
@@ -201,37 +161,93 @@ const PropertyDescription = () => {
             />
           </div>
         </div>
+{/* Listed In */}
+<div className="col-sm-6 col-xl-4">
+  <div className="mb20">
+    <label className="heading-color ff-heading fw600 mb10">
+      Listed In
+    </label>
+    <div className="location-area">
+      {showSelect && (
+        <Select
+          inputId="listedIn"
+          options={[
+            { value: "All Listing", label: "All Listing" },
+            { value: "Active", label: "Active" },
+            { value: "Sold", label: "Sold" },
+          ]}
+          styles={customStyles}
+          className="select-custom pl-0"
+          classNamePrefix="select"
+          placeholder="Select listed state"
+          /* mirror into hidden input via local state (like category/status) */
+          value={
+            listedIn
+              ? [{ value: "All Listing", label: "All Listing" },
+                 { value: "Active", label: "Active" },
+                 { value: "Sold", label: "Sold" }].find((o) => o.value === listedIn) || null
+              : null
+          }
+          onChange={(opt) => setListedIn(opt?.value ?? "")}
+          isClearable
+        />
+      )}
+    </div>
+  </div>
+</div>
 
-        {/* Yearly Tax Rate (optional) */}
-        <div className="col-sm-6 col-xl-4">
+        {/* Property Documents (embedded) */}
+        <div className="col-12">
           <div className="mb30">
             <label className="heading-color ff-heading fw600 mb10">
-              Yearly Tax Rate
+              Property Documents
             </label>
-            <input
-              type="number"
-              min={0}
-              className="form-control"
-              placeholder="Optional"
-              name="yearlyTaxRate"
-            />
+
+            <div className="row">
+              {DOCUMENT_GROUPS.map((group) => (
+                <div key={group.label} className="col-12 mb20">
+                  <h6 className="list-title mb10">{group.label}</h6>
+                  <div className="checkbox-style1">
+                    <div className="row">
+                      {group.items.map((label) => {
+                        const id = `doc-${slug(group.label)}-${slug(label)}`;
+                        return (
+                          <div key={id} className="col-sm-6 col-lg-4 col-xxl-3">
+                            <label className="custom_checkbox" htmlFor={id}>
+                              {label}
+                              <input
+                                id={id}
+                                type="checkbox"
+                                name="documents"   // backend receives as documents[]
+                                value={label}
+                              />
+                              <span className="checkmark" />
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {/* Optional free-text for uncommon docs */}
+              <div className="col-12 mt10">
+                <label className="heading-color ff-heading fw600 mb10">
+                  Other Document (optional)
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Type any additional document"
+                  name="documentsOther"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* After Price Label (optional) */}
-        <div className="col-sm-6 col-xl-4">
-          <div className="mb30">
-            <label className="heading-color ff-heading fw600 mb10">
-              After Price Label
-            </label>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="e.g., /year"
-              name="afterPriceLabel"
-            />
-          </div>
-        </div>
+        {/* (Optional fields you commented out earlier remain omitted) */}
       </div>
     </div>
   );

@@ -31,7 +31,9 @@
   .breadcrumbTitle {
     font-size: clamp(22px, 4.2vw, 36px);
     line-height: 1.15;
-    margin: 4px 0 4px;       /* no bottom margin to avoid gap */
+    margin: 4px 0 4px;    
+    margin-top: 60px;
+    margin-bottom: 20px;
   }
   
   /* ---------- About section spacing ---------- */

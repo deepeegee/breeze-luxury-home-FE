@@ -30,7 +30,7 @@ export const canonType = (s) => {
   return TYPE_MAP.get(k) ?? s;
 };
 
-export default function TopFilterBar({ setCurrentSortingOption, colstyle, setColstyle }) {
+export default function TopFilterBar() {
   const router = useRouter();
   const sp = useSearchParams();
 
@@ -58,48 +58,58 @@ export default function TopFilterBar({ setCurrentSortingOption, colstyle, setCol
 
   /* ---------- handlers for child widgets (apply immediately) ---------- */
   const filterFunctions = useMemo(() => {
-    // current values from URL (for components that need checked/selected state)
-    const currBeds = getNum(sp.get("beds"), 0);   // 0 = any
+    // current values from URL
+    const currBeds = getNum(sp.get("beds"), 0);
     const currBaths = getNum(sp.get("baths"), 0);
 
+    // STATUS: write 'available' | 'sold' (blank for All)
+    const currStatus = (sp.get("status") || "").toLowerCase(); // 'available' | 'sold' | ''
+    const listingStatus =
+      currStatus === "sold" ? "Sold" : currStatus === "available" ? "Available" : "All";
+
+    // PRICE
+    const currMin = getNum(sp.get("minPrice"), undefined);
+    const currMax = getNum(sp.get("maxPrice"), undefined);
+
     const api = {
-      // status
+      // status (labels: 'All' | 'Available' | 'Sold')
       setStatus: (label) => {
-        const val = (label || "").toString().toLowerCase();
-        const qVal =
-          val.includes("sold")
-            ? "sold"
-            : val.includes("sale") || val.includes("avail")
-            ? "for-sale"
-            : "";
+        const val = (label || "").toLowerCase();
+        const qVal = val.includes("sold") ? "sold" : val.includes("avail") ? "available" : "";
         updateQuery({ status: qVal });
       },
+      // legacy compatibility
+      handlelistingStatus: (label) => {
+        const val = (label || "").toLowerCase();
+        const qVal = val.includes("sold") ? "sold" : val.includes("avail") ? "available" : "";
+        updateQuery({ status: qVal });
+      },
+      listingStatus,
 
-      // types
+      // property types
       setPropertyTypes: (types = []) => {
-        const norm = (Array.isArray(types) ? types : [types])
-          .map(canonType)
-          .filter(Boolean);
+        const norm = (Array.isArray(types) ? types : [types]).map(canonType).filter(Boolean);
         updateQuery({ type: norm });
       },
 
-      // price
+      // price (₦-based)
       setPriceRange: ([min, max] = []) =>
         updateQuery({ minPrice: min ?? "", maxPrice: max ?? "" }),
+      handlepriceRange: ([min, max] = []) =>
+        updateQuery({ minPrice: min ?? "", maxPrice: max ?? "" }),
+      minPrice: currMin,
+      maxPrice: currMax,
+      priceRange: [currMin ?? 0, currMax ?? 2_000_000_000],
 
-      // beds/baths (primary names)
+      // beds/baths
       setBeds: (n) => updateQuery({ beds: n ?? "" }),
       setBaths: (n) => updateQuery({ baths: n ?? "" }),
-
-      // beds/baths (aliases used by existing child components)
       handlebedrooms: (n) => updateQuery({ beds: n ?? "" }),
       handlebathroms: (n) => updateQuery({ baths: n ?? "" }),
-
-      // expose current values (for checked= in Bedroom/Bathroom)
       bedrooms: currBeds,
       bathroms: currBaths,
 
-      // search box
+      // search
       setQuery: (q) => updateQuery({ q }),
 
       // reset
@@ -111,17 +121,10 @@ export default function TopFilterBar({ setCurrentSortingOption, colstyle, setCol
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sp]);
 
-  const onSortChange = (val) => {
-    if (typeof setCurrentSortingOption === "function") {
-      setCurrentSortingOption(val);
-    }
-    updateQuery({ sort: val });
-  };
-
   /* ---------- derive compact trigger labels ---------- */
-  const statusQ = sp.get("status"); // "for-sale" | "sold" | null
+  const statusQ = (sp.get("status") || "").toLowerCase(); // 'available' | 'sold' | ''
   const statusLabel =
-    statusQ === "sold" ? "Sold" : statusQ === "for-sale" ? "For sale" : "Status";
+    statusQ === "sold" ? "Sold" : statusQ === "available" ? "Available" : "Status";
 
   const typeQ = sp.get("type"); // e.g. "A,B,C"
   const typeArr = typeQ ? typeQ.split(",") : [];
@@ -136,8 +139,8 @@ export default function TopFilterBar({ setCurrentSortingOption, colstyle, setCol
   const maxPrice = sp.get("maxPrice");
   const priceLabel =
     minPrice || maxPrice
-      ? `Price ${minPrice ? `$${Number(minPrice).toLocaleString()}` : "Any"} – ${
-          maxPrice ? `$${Number(maxPrice).toLocaleString()}` : "Any"
+      ? `Price ${minPrice ? `₦${Number(minPrice).toLocaleString()}` : "Any"} – ${
+          maxPrice ? `₦${Number(maxPrice).toLocaleString()}` : "Any"
         }`
       : "Price";
 
@@ -146,12 +149,10 @@ export default function TopFilterBar({ setCurrentSortingOption, colstyle, setCol
   const bbLabel =
     beds || baths ? `Beds/Baths ${beds ?? "Any"}/${baths ?? "Any"}` : "Beds / Baths";
 
-  const sortDefault = sp.get("sort") || "Best Match";
-
   return (
     <>
-      {/* LEFT: filters */}
-      <div className="col-xl-9 d-none d-lg-block">
+      {/* LEFT: filters only */}
+      <div className="col-xl-12">
         <div className="dropdown-lists">
           <ul className="p-0 text-center text-xl-start">
             {/* STATUS */}
@@ -250,39 +251,6 @@ export default function TopFilterBar({ setCurrentSortingOption, colstyle, setCol
               </button>
             </li>
           </ul>
-        </div>
-      </div>
-
-      {/* RIGHT: sort + view toggle */}
-      <div className="col-xl-3">
-        <div className="page_control_shorting d-flex align-items-center justify-content-center justify-content-sm-end">
-          <div className="pcs_dropdown pr10 d-flex align-items-center">
-            <span style={{ minWidth: "60px" }}>Sort by</span>
-            <select
-              className="form-select"
-              onChange={(e) => onSortChange(e.target.value)}
-              defaultValue={sortDefault}
-            >
-              <option>Best Match</option>
-              <option>Newest</option>
-              <option>Best Seller</option>
-              <option>Price Low</option>
-              <option>Price High</option>
-            </select>
-          </div>
-
-          <div
-            className={`pl15 pr15 bdrl1 bdrr1 d-none d-md-block cursor ${!colstyle ? "menuActive" : ""}`}
-            onClick={() => setColstyle && setColstyle(false)}
-          >
-            Grid
-          </div>
-          <div
-            className={`pl15 d-none d-md-block cursor ${colstyle ? "menuActive" : ""}`}
-            onClick={() => setColstyle && setColstyle(true)}
-          >
-            List
-          </div>
         </div>
       </div>
 

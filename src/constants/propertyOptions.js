@@ -1,6 +1,7 @@
+// src/constants/propertyOptions.ts (or .js)
 export const CATEGORY_OPTIONS = [
   "Apartment",
-  "Fully Detached Duplex",
+  "Fully-Detached Duplex", // ← keep hyphen to match BE
   "Land",
   "Hotel",
   "Farm",
@@ -9,6 +10,57 @@ export const CATEGORY_OPTIONS = [
   "Contemporary Duplex",
   "Terrace Duplex",
 ].map((v) => ({ value: v, label: v }));
+
+
+export const DOCUMENT_GROUPS = [
+  {
+    label: "Title & Ownership",
+    items: [
+      "Certificate of Occupancy (C of O)",
+      "Right of Occupancy (R of O)",
+      "Governor's Consent",
+      "Deed of Assignment (Registered)",
+      "Deed of Conveyance",
+      "Deed of Lease / Sub-Lease",
+      "Power of Attorney (Registered)",
+    ],
+  },
+  {
+    label: "Survey & Land",
+    items: [
+      "Registered Survey Plan",
+      "Beacon/Perimeter Survey",
+      "Excision",
+      "Gazette",
+      "Allocation Letter",
+    ],
+  },
+  {
+    label: "Building & Approvals",
+    items: [
+      "Approved Building Plan",
+      "Building Approval/Permit",
+      "Certificate of Completion/Fitness",
+    ],
+  },
+  {
+    label: "Financial & Transaction",
+    items: [
+      "Offer Letter / Contract of Sale",
+      "Receipts / Payment Acknowledgements",
+      "Stamped/Registered Land Registry Receipts",
+      "Valuation Report (Optional)",
+    ],
+  },
+  {
+    label: "Legal / Other (If Applicable)",
+    items: [
+      "Court Judgment / Probate",
+      "Deed of Rectification",
+      "Estate Deed / Deed of Sub-Division",
+    ],
+  },
+];
 
 export const AMENITY_GROUPS = [
   {

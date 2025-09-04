@@ -38,7 +38,7 @@ const AdvanceFilterModal = () => {
   const onReset = () => {
     setType("");
     setLoc("");
-    router.push("/grid-full-3-col");
+    router.push("/properties");
   };
 
   const onSearch = (e) => {
@@ -69,7 +69,7 @@ const AdvanceFilterModal = () => {
       .map(el => el.value);
     if (amenities.length) qs.set("amenities", amenities.join(","));
 
-    router.push(`/grid-full-3-col?${qs.toString()}`);
+    router.push(`/properties?${qs.toString()}`);
   };
 
   return (

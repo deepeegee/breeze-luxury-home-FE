@@ -313,12 +313,21 @@ export default function FeatureProperties() {
           display: flex;
           flex-direction: column;
           height: 560px; /* uniform height */
+          max-width: 380px; /* 👈 make cards slimmer */
+          margin: 0 auto; /* 👈 center them inside the slide */
           border-radius: 14px;
           overflow: hidden;
           background: #fff;
           box-shadow: 0 10px 24px rgba(0,0,0,.06);
           transition: transform .18s ease, box-shadow .18s ease;
         }
+        
+        /* Adjust swiper slides to center slim cards */
+        :global(.swiper-slide) {
+          display: flex;
+          justify-content: center;
+        }
+        
         
         /* Remove hover effects from card when wrapped in link */
         .card-link .card-fixed {

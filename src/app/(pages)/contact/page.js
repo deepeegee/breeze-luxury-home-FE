@@ -18,6 +18,7 @@ const Contact = () => {
 
       <section>
         <div className="container">
+          <h2 className="title mb20">Contact Us</h2>
           <div className="row g-4 align-items-start">
             {/* Text + Visit Our Office */}
             <div className="col-12 col-lg-6 order-1 order-lg-2">
@@ -34,7 +35,7 @@ const Contact = () => {
                 Prefer to talk in person? Visit our{" "}
                 <strong>Lagos Office</strong> — we’re open{" "}
                 <strong>Mon–Fri, 9:00am–5:00pm</strong>. You can also{" "}
-                <Link href="/grid-full-3-col">browse verified listings</Link> or{" "}
+                <Link href="/properties">browse verified listings</Link> or{" "}
                 <Link href="/contact">book a free consultation</Link>.
               </p>
 
@@ -52,10 +53,12 @@ const Contact = () => {
               <div className="row mb-4 mb-lg-5">
                 <div className="col-12">
                   <div className="contact-info">
-                    <p className="info-title"><strong>
-                      7, Rasaki Balogun Street, Atlantic View Estate, Off Alpha
-                      Beach Road, Lekki Peninsula, Lagos, Nigeria
-                      </strong></p>
+                    <p className="info-title">
+                      <strong>
+                        7, Rasaki Balogun Street, Atlantic View Estate, Off
+                        Alpha Beach Road, Lekki Peninsula, Lagos, Nigeria
+                      </strong>
+                    </p>
                     <h6 className="info-phone">
                       <a href="tel:+2348148827901">0814 882 7901</a>
                     </h6>

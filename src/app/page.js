@@ -52,7 +52,7 @@ const HomePage = () => {
                   smart investment advisory — all delivered with professionalism and integrity.
                 </p>
                 <div className={styles.whyCtas}>
-                  <Link href="/grid-full-3-col" className="ud-btn btn-thm">
+                  <Link href="/properties" className="ud-btn btn-thm">
                     Browse Verified Listings <i className="fal fa-arrow-right-long" />
                   </Link>
                 </div>

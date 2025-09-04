@@ -1,3 +1,4 @@
+// src/components/property/dashboard/dashboard-add-property/index.js
 "use client";
 
 import React, { useState } from "react";
@@ -8,8 +9,15 @@ import LocationField from "./LocationField";
 import DetailsFiled from "./details-field";
 import Amenities from "./Amenities";
 import { useCreateListing } from "@/lib/useApi";
+import { toast } from "react-hot-toast";
 
 /* ---------- Helpers ---------- */
+const strOrUndefined = (v) => {
+  if (typeof v !== "string") return undefined;
+  const s = v.trim();
+  return s ? s : undefined;
+};
+
 const numOrUndefined = (v) => {
   if (v == null) return undefined;
   const s = String(v).trim();
@@ -28,21 +36,20 @@ const posIntOrUndefined = (v) => {
   return n != null && n >= 1 ? Math.floor(n) : undefined;
 };
 
-const toISODateOrUndefined = (d) => {
-  if (!d) return undefined;
-  try {
-    const s = String(d).trim();
-    if (!s) return undefined;
-    return new Date(s).toISOString();
-  } catch {
-    return undefined;
-  }
+// Parse a date string; only return ISO if valid, else undefined (keep field optional)
+const isoDateOrUndefined = (raw) => {
+  if (typeof raw !== "string") return undefined;
+  const s = raw.trim();
+  if (!s) return undefined;
+  const ms = Date.parse(s);
+  if (Number.isNaN(ms)) return undefined;
+  return new Date(ms).toISOString();
 };
 
 const parsePhotos = (json) => {
   if (!json) return undefined;
   try {
-    const arr = JSON.parse(json);
+    const arr = JSON.parse(String(json));
     if (!Array.isArray(arr)) return undefined;
     return arr
       .map((p) =>
@@ -57,7 +64,7 @@ const parsePhotos = (json) => {
 const parseNearby = (json) => {
   if (!json) return undefined;
   try {
-    const arr = JSON.parse(json);
+    const arr = JSON.parse(String(json));
     if (!Array.isArray(arr)) return undefined;
     return arr
       .map((n) => ({
@@ -65,21 +72,90 @@ const parseNearby = (json) => {
         distance: (n?.distance ?? "").trim(),
         category: (n?.category ?? "").trim(),
       }))
-      .filter((n) => n.label); // keep rows with at least a label
+      .filter((n) => n.label);
   } catch {
     return undefined;
   }
 };
 
-const prune = (obj) =>
+// Keep empty string for whitelisted keys (e.g., 'name'), prune blank/undefined otherwise
+const pruneExceptEmpty = (obj, keepEmptyKeys = []) =>
   Object.fromEntries(
-    Object.entries(obj).filter(
-      ([, v]) =>
-        v !== undefined &&
-        v !== null &&
-        !(typeof v === "string" && v.trim() === "")
-    )
+    Object.entries(obj).filter(([k, v]) => {
+      if (v === undefined || v === null) return false;
+      if (typeof v === "string") {
+        const t = v.trim();
+        if (t === "") return keepEmptyKeys.includes(k);
+        return true;
+      }
+      return true;
+    })
   );
+
+// Turn any error into toast lines
+const toastErrors = (err) => {
+  const lines = [];
+  const data = err?.response?.data;
+
+  if (Array.isArray(data?.errors)) {
+    data.errors.forEach((e) =>
+      lines.push(typeof e === "string" ? e : e?.message || JSON.stringify(e))
+    );
+  } else if (Array.isArray(data?.message)) {
+    data.message.forEach((m) =>
+      lines.push(typeof m === "string" ? m : JSON.stringify(m))
+    );
+  } else if (typeof data?.message === "string") {
+    lines.push(...data.message.split(/,\s*/));
+  } else if (typeof err?.message === "string") {
+    lines.push(...err.message.split(/,\s*/));
+  } else {
+    lines.push("Failed to create listing.");
+  }
+
+  lines.filter(Boolean).forEach((m) => toast.error(m, { duration: 5000 }));
+};
+
+// Collect property documents robustly
+const collectPropertyDocuments = (fd, formEl) => {
+  // 1) Normal FormData names (both styles)
+  let docs = [
+    ...fd.getAll("propertyDocuments"),
+    ...fd.getAll("propertyDocuments[]"),
+  ]
+    .map(String)
+    .filter(Boolean);
+
+  // 2) Fallback to DOM (in case inputs are outside the form boundaries or custom)
+  if (!docs.length && formEl && typeof document !== "undefined") {
+    const selectors = [
+      'input[name="propertyDocuments"]:checked',
+      'input[name="propertyDocuments[]"]:checked',
+      // common alternates just in case
+      'input[name="documents"]:checked',
+      'input[name="documents[]"]:checked',
+    ];
+    const nodes = document.querySelectorAll(selectors.join(","));
+    docs = Array.from(nodes)
+      .map((el) => String(el.value))
+      .filter(Boolean);
+  }
+
+  // 3) Optional hidden JSON mirror (if you add one in the UI)
+  if (!docs.length) {
+    const json = fd.get("propertyDocumentsJson");
+    if (typeof json === "string" && json.trim()) {
+      try {
+        const arr = JSON.parse(json);
+        if (Array.isArray(arr)) {
+          docs = arr.map(String).filter(Boolean);
+        }
+      } catch {}
+    }
+  }
+
+  return docs.length ? docs : undefined;
+};
 
 const AddPropertyTabContent = () => {
   const router = useRouter();
@@ -94,65 +170,98 @@ const AddPropertyTabContent = () => {
     setSubmitting(true);
 
     try {
-      const fd = new FormData(e.currentTarget);
+      const formEl = e.currentTarget;
+      const fd = new FormData(formEl);
 
       const title = fd.get("title");
       const price = numOrUndefined(fd.get("price"));
-
       if (!title || price == null) {
+        const msg = "Please provide at least Title and Price.";
         setSubmitting(false);
-        setSubmitError("Please provide at least Title and Price.");
+        setSubmitError(msg);
+        toast.error(msg);
         return;
       }
 
       const bedrooms = posIntOrUndefined(fd.get("bedrooms"));
       const bathrooms = posIntOrUndefined(fd.get("bathrooms"));
       if (bedrooms == null || bathrooms == null) {
+        const msg = "Please provide Bedrooms and Bathrooms (min 1).";
         setSubmitting(false);
-        setSubmitError("Please provide Bedrooms and Bathrooms (min 1).");
+        setSubmitError(msg);
+        toast.error(msg);
         return;
       }
 
+      // Always keep name as a string (empty allowed)
+      const rawName = fd.get("name");
+      const name = typeof rawName === "string" ? rawName : "";
+
+      // Date: only include if valid; otherwise omit entirely
+      const availableFromISO = isoDateOrUndefined(fd.get("availableFrom"));
+
+      // Documents (robust)
+      const propertyDocuments = collectPropertyDocuments(fd, formEl);
+
+      // Numeric / optional
       const sizeInFt = posNumOrUndefined(fd.get("sizeInFt"));
       const rooms = posIntOrUndefined(fd.get("rooms"));
       const floorsNo = posIntOrUndefined(fd.get("floorsNo"));
       const yearBuilt = numOrUndefined(fd.get("yearBuilt"));
+      const nearby = parseNearby(fd.get("nearby"));
+      const description = String(fd.get("description") ?? "");
 
-      // NEW: read nearby JSON (hidden input from LocationField.NearbyEditor)
-      const nearbyJson = fd.get("nearby");
-      const nearby = parseNearby(nearbyJson);
+      // Optional text fields from DetailsFiled
+      const basement = strOrUndefined(fd.get("basement"));
+      const extraDetails = strOrUndefined(fd.get("extraDetails"));
+      const roofing = strOrUndefined(fd.get("roofing"));
+      const exteriorMaterial = strOrUndefined(fd.get("exteriorMaterial"));
+      const internalNotes = strOrUndefined(fd.get("internalNotes"));
 
-      const payload = prune({
+      const base = {
         title: String(title),
-        description: fd.get("description"),
-        name: fd.get("name"),
+        description,
+        name, // keep even if "", to satisfy “name must be a string”
         category: fd.get("category"),
         listedIn: fd.get("listedIn"),
         status: fd.get("status"),
         price,
         photos: parsePhotos(fd.get("photos")),
-        address: String(fd.get("address") ?? "N/A"), // Estate / Address
+        address: String(fd.get("address") ?? "N/A"),
         country: String(fd.get("country") ?? "Nigeria"),
         state: String(fd.get("state") ?? "N/A"),
-        city: String(fd.get("city") ?? "N/A"), // Neighborhood goes here
+        city: String(fd.get("city") ?? "N/A"),
         sizeInFt,
         rooms,
         bedrooms,
         bathrooms,
         yearBuilt,
-        availableFrom: toISODateOrUndefined(fd.get("availableFrom")),
         floorsNo,
         amenities: fd.getAll("amenities").map(String),
-        nearby,           // ✅ send array to BE
-        isFeatured,       // ✅ include featured flag
-      });
 
-      console.log("CREATE /properties/create payload:", payload);
+        // NEW: extra optional fields
+        basement,
+        extraDetails,
+        roofing,
+        exteriorMaterial,
+        internalNotes,
+
+        nearby,
+        isFeatured,
+
+        ...(propertyDocuments ? { propertyDocuments } : {}),
+        ...(availableFromISO ? { availableFrom: availableFromISO } : {}),
+      };
+
+      // Keep empty string for 'name'; remove empty/undefined everywhere else
+      const payload = pruneExceptEmpty(base, ["name"]);
 
       await createListing(payload);
+      toast.success("Listing created successfully!");
       router.replace("/dashboard-my-properties");
     } catch (err) {
       console.error("Create listing failed:", err);
+      toastErrors(err);
       setSubmitError(err?.message || "Failed to create listing.");
       setSubmitting(false);
     }
@@ -223,7 +332,6 @@ const AddPropertyTabContent = () => {
               <h4 className="title fz17 mb30">Property Description</h4>
               <PropertyDescription />
 
-              {/* Featured Toggle */}
               <div className="form-check mt3">
                 <input
                   type="checkbox"
