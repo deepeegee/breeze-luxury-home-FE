@@ -4,18 +4,20 @@ import React, { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import "./FloatingWhatsAppButton.css";
 
-const BUSINESS_WA = "2348148827901"; // 2348148827901
+const BUSINESS_WA = "2348148827901";
 
 const formatNaira = (n) =>
-  typeof n === "number" && Number.isFinite(n) ? `₦${n.toLocaleString("en-NG")}` : "";
+  typeof n === "number" && Number.isFinite(n)
+    ? `₦${n.toLocaleString("en-NG")}`
+    : "";
 
-export default function FloatingWhatsAppButton({ property, label = "Chat on WhatsApp" }) {
+export default function FloatingWhatsAppButton({
+  property,
+  label = "Chat on WhatsApp",
+}) {
   const pathname = usePathname();
 
-  // If this is the global button (no `property` passed) and we're on a property page,
-  // hide this instance so the page-specific one can render without duplicates.
-  if (!property && pathname?.startsWith("/property")) return null;
-
+  // Build the WhatsApp message (always call hooks; don't early-return yet)
   const message = useMemo(() => {
     const url = typeof window !== "undefined" ? window.location.href : "";
 
@@ -41,19 +43,21 @@ export default function FloatingWhatsAppButton({ property, label = "Chat on What
     }
 
     // Generic message for non-property pages
-    const pageTitle =
-      (typeof document !== "undefined" && document.title) || "your listings";
     return [
       "Hello Breeze Luxury Homes.",
       "I'd like to get more information about your available properties.",
       "Please assist. Thank you!",
-    ]
-      .filter(Boolean)
-      .join("\n");
+    ].join("\n");
   }, [property]);
 
-  // Open direct chat with business number (not share link)
-  const waHref = `https://wa.me/${BUSINESS_WA}?text=${encodeURIComponent(message)}`;
+  // Decide visibility AFTER hooks have run
+  const shouldHideGlobalOnPropertyPage =
+    !property && pathname?.startsWith("/property");
+  if (shouldHideGlobalOnPropertyPage) return null;
+
+  const waHref = `https://wa.me/${BUSINESS_WA}?text=${encodeURIComponent(
+    message
+  )}`;
 
   return (
     <div className="floating-whatsapp-btn">
