@@ -4,7 +4,7 @@ import Link from "next/link";
 import React from "react";
 
 export const metadata = {
-  title: "Register  ||  Breeze Luxury Homes",
+  title: "Register — Breeze Luxury Homes",
 };
 
 const Register = () => {

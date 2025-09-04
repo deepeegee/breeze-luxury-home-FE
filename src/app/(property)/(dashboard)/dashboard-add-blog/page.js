@@ -6,7 +6,7 @@ import SidebarDashboard from "@/components/property/dashboard/SidebarDashboard";
 import AddBlogContent from "@/components/property/dashboard/dashboard-add-blog";
 
 export const metadata = {
-  title: "Dashboard Add Blog || Breeze Luxury Homes - Real Estate NextJS Template",
+  title: "Dashboard Add Blog — Breeze Luxury Homes",
 };
 
 const DashboardAddProperty = () => {

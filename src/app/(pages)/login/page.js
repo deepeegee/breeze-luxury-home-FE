@@ -4,7 +4,7 @@ import Link from "next/link";
 import LoginClientWrapper from "@/components/common/login-signup-modal/LoginClientWrapper";  // Import directly
 
 export const metadata = {
-  title: "Login  ||  Breeze Luxury Homes",
+  title: "Login — Breeze Luxury Homes",
 };
 
 export const dynamic = "force-dynamic"; // Keep this for dynamic rendering of the page.

@@ -9,7 +9,7 @@ const MenuWidget = () => {
       title: "Quick Links",
       links: [
         { label: "About Us", href: "/about" },
-        { label: "Blog", href: "/blog" },
+        { label: "Blog", href: "/blog-list" },
         { label: "Contact", href: "/contact" },
         // { label: "Terms of Use", href: "/legal/terms" },
       ],
