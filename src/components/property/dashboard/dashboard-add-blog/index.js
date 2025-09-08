@@ -1,46 +1,53 @@
-'use client';
-
-import React, { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import SimpleEditor from '@/components/tiptap-templates/simple/simple-editor';
-import { useCreateBlog } from '@/lib/useApi';
+"use client";
+import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import SimpleEditor from "@/components/tiptap-templates/simple/simple-editor";
+import { useCreateBlog } from "@/lib/useApi";
 
 function isHtmlEmpty(html) {
   if (!html) return true;
-  const txt = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, '').trim();
+  const txt = html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, "")
+    .trim();
   return txt.length === 0;
 }
+
+/* Hardcoded categories – must match FE pills */
+const CATEGORY_OPTIONS = [
+  "Home Improvement",
+  "Life & Style",
+  "Finance",
+  "Selling a Home",
+  "Renting a Home",
+  "Buying a Home",
+  "Market Insights",
+  "Investment Tips",
+];
 
 const AddBlogContent = () => {
   const router = useRouter();
 
-  const [title, setTitle] = useState('');
-  const [html, setHtml] = useState('');
-  const [tags, setTags] = useState('');
+  const [title, setTitle] = useState("");
+  const [html, setHtml] = useState("");
+  const [category, setCategory] = useState(""); // ← single category string
   const [headerFile, setHeaderFile] = useState(null);
-  const [headerPreview, setHeaderPreview] = useState('');
+  const [headerPreview, setHeaderPreview] = useState("");
   const [images, setImages] = useState({});
-  const [error, setError] = useState('');
-  const [ok, setOk] = useState('');
+  const [error, setError] = useState("");
+  const [ok, setOk] = useState("");
 
   const { trigger: createPost, isMutating } = useCreateBlog();
-
-  const makeLocalId = () => 'img_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-
-  const tagList = useMemo(
-    () =>
-      tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean),
-    [tags]
-  );
 
   const canSubmit = useMemo(() => {
     if (!title.trim()) return false;
     if (isHtmlEmpty(html)) return false;
+    if (!category) return false;
     return true;
-  }, [title, html]);
+  }, [title, html, category]);
+
+  const makeLocalId = () =>
+    "img_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
 
   async function handleAddInlineImage(file) {
     const localId = makeLocalId();
@@ -50,50 +57,56 @@ const AddBlogContent = () => {
   }
 
   function resetForm() {
-    setTitle('');
-    setHtml('');
-    setTags('');
+    setTitle("");
+    setHtml("");
+    setCategory("");
     setImages({});
     if (headerPreview) URL.revokeObjectURL(headerPreview);
     setHeaderFile(null);
-    setHeaderPreview('');
-    setError('');
-    setOk('');
+    setHeaderPreview("");
+    setError("");
+    setOk("");
   }
 
   async function handleSubmit({ publish }) {
-    setError('');
-    setOk('');
+    setError("");
+    setOk("");
 
     if (!canSubmit) {
-      setError('Please add a title and some content.');
+      setError("Please add a title, content, and choose a category.");
       return;
     }
 
     try {
       const form = new FormData();
-      form.append('title', title.trim());
-      form.append('description', html);
-      form.append('published', publish ? 'true' : 'false');
+      form.append("title", title.trim());
+      form.append("description", html);
+      form.append("published", publish ? "true" : "false");
 
-      form.append('tagsCsv', tags);
-      tagList.forEach((t) => form.append('tags[]', t));
+      /* === IMPORTANT: Keep original BE fields but send ONE category ===
+         You used: tagsCsv + tags[]
+         We’ll put the selected category into both so BE keeps working.
+      */
+      // Send as a single clean CSV field for compatibility
+      form.append("tagsCsv", category);
+
+      // If your BE also reads 'tag' or 'tags' as single string, belt & suspenders:
+      form.append("tag", category);
+      form.append("tags", category);
 
       if (headerFile) {
-        form.append('headerImage', headerFile, headerFile.name);
+        form.append("headerImage", headerFile, headerFile.name);
       }
-
       Object.entries(images).forEach(([localId, file]) => {
-        form.append('images', file, file.name);
-        form.append('imageLocalIds', localId);
+        form.append("images", file, file.name);
+        form.append("imageLocalIds", localId);
       });
 
       await createPost(form);
-      setOk(publish ? 'Post published!' : 'Draft saved.');
-
-      router.replace('/dashboard-my-blogs');
+      setOk(publish ? "Post published!" : "Draft saved.");
+      router.replace("/dashboard-my-blogs");
     } catch (e) {
-      setError(e?.message || 'Failed to save blog post.');
+      setError(e?.message || "Failed to save blog post.");
     }
   }
 
@@ -103,7 +116,12 @@ const AddBlogContent = () => {
         <div className="col-12 col-xl-10">
           <div className="d-flex align-items-center justify-content-between mb20">
             <div className="d-flex gap-2">
-              <button className="ud-btn btn-light" onClick={resetForm} type="button" disabled={isMutating}>
+              <button
+                className="ud-btn btn-light"
+                onClick={resetForm}
+                type="button"
+                disabled={isMutating}
+              >
                 Reset
               </button>
               <button
@@ -112,7 +130,7 @@ const AddBlogContent = () => {
                 disabled={!canSubmit || isMutating}
                 type="button"
               >
-                {isMutating ? 'Saving…' : 'Save Draft'}
+                {isMutating ? "Saving…" : "Save Draft"}
               </button>
               <button
                 className="ud-btn btn-thm"
@@ -120,7 +138,8 @@ const AddBlogContent = () => {
                 disabled={!canSubmit || isMutating}
                 type="button"
               >
-                {isMutating ? 'Publishing…' : 'Publish'} <i className="fal fa-arrow-right-long" />
+                {isMutating ? "Publishing…" : "Publish"}{" "}
+                <i className="fal fa-arrow-right-long" />
               </button>
             </div>
           </div>
@@ -141,12 +160,14 @@ const AddBlogContent = () => {
                 placeholder="Give it a compelling title…"
                 rows={2}
                 className="form-control fz24 fw600"
-                style={{ border: 'none', outline: 'none', resize: 'none' }}
+                style={{ border: "none", outline: "none", resize: "none" }}
               />
             </div>
 
             <div className="col-12 col-lg-4">
-              <label className="form-label fw600">Header Image (optional)</label>
+              <label className="form-label fw600">
+                Header Image (optional)
+              </label>
               <div className="border rounded p-3 d-flex flex-column align-items-start">
                 {headerPreview ? (
                   <div className="w-100">
@@ -154,7 +175,7 @@ const AddBlogContent = () => {
                     <img
                       src={headerPreview}
                       alt="Header preview"
-                      style={{ width: '100%', height: 'auto', borderRadius: 8 }}
+                      style={{ width: "100%", height: "auto", borderRadius: 8 }}
                     />
                     <div className="mt-2 d-flex gap-2">
                       <button
@@ -163,7 +184,7 @@ const AddBlogContent = () => {
                         onClick={() => {
                           if (headerPreview) URL.revokeObjectURL(headerPreview);
                           setHeaderFile(null);
-                          setHeaderPreview('');
+                          setHeaderPreview("");
                         }}
                       >
                         Remove
@@ -171,7 +192,10 @@ const AddBlogContent = () => {
                     </div>
                   </div>
                 ) : (
-                  <label className="ud-btn btn-light mb0" style={{ cursor: 'pointer' }}>
+                  <label
+                    className="ud-btn btn-light mb0"
+                    style={{ cursor: "pointer" }}
+                  >
                     Choose Image
                     <input
                       type="file"
@@ -191,29 +215,41 @@ const AddBlogContent = () => {
             </div>
           </div>
 
+          {/* Category (replaces free-text tags) */}
           <div className="mb20">
-            <label className="form-label fw600">Tags (comma-separated)</label>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="e.g. market, luxury, design"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-            />
-            {tagList.length > 0 && (
-              <div className="mt-2 d-flex flex-wrap gap-2">
-                {tagList.map((t) => (
-                  <span key={t} className="badge bg-light text-dark border">{t}</span>
-                ))}
+            <label className="form-label fw600">Category</label>
+            <select
+              className="form-select"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+            >
+              <option value="">Choose a category…</option>
+              {CATEGORY_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            {!!category && (
+              <div className="mt-2">
+                <span className="badge bg-light text-dark border">
+                  {category}
+                </span>
               </div>
             )}
           </div>
 
           <div className="mb30">
             <label className="form-label fw600">Content</label>
-            <SimpleEditor initialHTML="" onChange={setHtml} onAddImage={handleAddInlineImage} className="mb10" />
+            <SimpleEditor
+              initialHTML=""
+              onChange={setHtml}
+              onAddImage={handleAddInlineImage}
+              className="mb10"
+            />
             <small className="text-muted">
-              Paste, drag & drop, or pick images. They’ll upload with this post on Save/Publish.
+              Paste, drag & drop, or pick images. They’ll upload with this post
+              on Save/Publish.
             </small>
           </div>
 
@@ -224,7 +260,7 @@ const AddBlogContent = () => {
               disabled={!canSubmit || isMutating}
               type="button"
             >
-              {isMutating ? 'Saving…' : 'Save Draft'}
+              {isMutating ? "Saving…" : "Save Draft"}
             </button>
             <button
               className="ud-btn btn-thm"
@@ -232,7 +268,8 @@ const AddBlogContent = () => {
               disabled={!canSubmit || isMutating}
               type="button"
             >
-              {isMutating ? 'Publishing…' : 'Publish'} <i className="fal fa-arrow-right-long" />
+              {isMutating ? "Publishing…" : "Publish"}{" "}
+              <i className="fal fa-arrow-right-long" />
             </button>
           </div>
         </div>

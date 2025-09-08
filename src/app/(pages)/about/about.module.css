@@ -1,132 +1,172 @@
-/* ---------- Breadcrumb (no theme background, tight spacing) ---------- */
-.breadcrumbSection {
-    padding: 12px 0 0;     /* small top padding; no bottom padding */
-    margin: 0;  
-    margin-top: 60px;           /* remove any section margin */
-  }
-  
-  .breadcrumb {
-    margin: 0;             /* kill theme margin */
-    padding: 0;            /* kill theme padding */
-  }
-  
-  .breadcrumbNav {
-    margin-top: 60px;           /* remove any section margin */
+/* ===== Breadcrumb with theme background (via wrapper for CSS Modules purity) ===== */
+.breadcrumbWrapper :global(.breadcumb-section2) {
+  position: relative;
+  min-height: 42vh;
+  display: grid;
+  place-items: center;
+  background-image:
+    linear-gradient(180deg, rgba(8,25,56,.55), rgba(8,25,56,.35)),
+    url('/images/about/about-hero.jpg');
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+.breadcrumbWrapper :global(.breadcumb-section2 .breadcumb-style1) {
+  padding: 64px 0;
+  text-align: center;
+}
+.breadcrumbTitle {
+  color: #000000;
+  font-weight: 800;
+  letter-spacing: .2px;
+  margin: 0;
+  font-size: clamp(24px, 4.2vw, 40px);
+  line-height: 1.15;
+}
 
-  }
-  
-  .breadcrumbList {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    list-style: none;
-    padding: 0;
-    margin: 0 0 4px;       /* tight */
-    font-size: clamp(12px, 2.6vw, 14px);
-    opacity: .9;
-  }
-  .breadcrumbList li::after { content: "›"; margin: 0 6px; opacity: .6; }
-  .breadcrumbList li:last-child::after { content: ""; }
-  
-  .breadcrumbTitle {
-    font-size: clamp(22px, 4.2vw, 36px);
-    line-height: 1.15;
-    margin: 4px 0 4px;    
-    margin-top: 60px;
-    margin-bottom: 20px;
-  }
-  
-  /* ---------- About section spacing ---------- */
-  .aboutSection {
-    margin-top: 10px;         /* sits close to breadcrumb */
-    padding-top: 10px;     /* reduce/start subtle spacing; set to 0 if you want it flush */
-  }
-  
-  /* ---------- Typography & rhythm ---------- */
-  .subtitle {
-    font-size: clamp(14px, 2.6vw, 16px);
-    letter-spacing: .2px;
-    margin: 18px 0 8px;
-  }
-  
-  .paragraph {
-    margin: 0 0 14px;
-    line-height: 1.7;
-    max-width: 72ch;
-  }
-  
-  /* ---------- Layout grid ---------- 
-     Mobile: main then side
-     Desktop: main | side
-  */
-  .aboutGrid {
-    display: grid;
-    gap: 22px;
+/* ===== Spacing rhythm (slightly increased to breathe) ===== */
+.aboutSection { padding: 6px 0 0; }
+.sectionGap { margin-top: 84px; }        /* +10 from previous */
+.sectionGapXL { margin-top: 136px; }     /* +10 from previous */
+@media (min-width: 1200px) {
+  .sectionGap { margin-top: 92px; }      /* +20 from earlier desktop */
+  .sectionGapXL { margin-top: 132px; }   /* +20 from earlier desktop */
+}
+
+/* ===== Side label layout (vertical on desktop, horizontal on mobile) ===== */
+.sideLabelWrap {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px 32px;            /* slightly larger gaps */
+  align-items: start;
+}
+
+.vertLabel {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-weight: 800;
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: #1d4ed8;
+  opacity: .9;
+  user-select: none;
+  font-size: clamp(12px, 1.2vw, 15px);
+}
+
+/* Mobile: make labels horizontal and position above the content */
+@media (max-width: 767.98px) {
+  .sideLabelWrap {
     grid-template-columns: 1fr;
-    grid-template-areas:
-      "main"
-      "side";
-    align-items: start;
+    gap: 12px 18px;
   }
-  .main { grid-area: main; }
-  .side {
-    grid-area: side;
-    display: grid;
-    gap: 14px;
-    align-content: start;
+  .vertLabel {
+    writing-mode: horizontal-tb;
+    transform: none;
+    letter-spacing: .18em;
+    font-size: 12px;
+    order: -1;             /* keep label before content */
   }
-  
-  @media (min-width: 992px) {
-    .aboutGrid {
-      grid-template-columns: 2fr 1fr;
-      grid-template-areas: "main side";
-      gap: 32px 48px;
-    }
-  }
-  
-  /* ---------- Lists with custom bullets ---------- */
-  .list {
-    padding-left: 0;
-    list-style: none;
-    margin: 0 0 14px;
-  }
-  .list li {
-    position: relative;
-    padding-left: 1.25rem;
-    margin: 6px 0;
-    line-height: 1.6;
-  }
-  .list li::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0.72em;
-    width: 6px;
-    height: 6px;
-    border-radius: 999px;
-    background: var(--bs-primary, #0d6efd);
-    box-shadow: 0 0 0 2px rgba(13,110,253,.15);
-    transform: translateY(-50%);
-  }
-  
-  /* Two-column split list for expertise on wider screens */
-  .listSplit {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 6px 18px;
-  }
-  @media (min-width: 576px) {
-    .listSplit { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
-  
-  /* ---------- Cards ---------- */
-  .card {
-    background: var(--bs-light, #f6f7fb);
-    border: 1px solid rgba(0,0,0,.06);
-    border-radius: 12px;
-    padding: 16px;
-  }
-  
-  /* ---------- Utilities ---------- */
-  .mt40 { margin-top: 40px; }
-  
+}
+
+/* ===== Intro text ===== */
+.introText { max-width: 850px; margin: 0 auto; }
+.paragraph { margin: 0 0 16px; line-height: 1.75; color: #0f172a; }
+
+/* ===== Vision & Mission: side-by-side, icon on top, no boxes ===== */
+.statementsRow {
+  display: grid;
+  grid-template-columns: 1fr;   /* stack on mobile */
+  gap: 32px;                    /* a bit more breathing */
+  align-items: start;
+  justify-items: center;
+}
+@media (min-width: 768px) {
+  .statementsRow { grid-template-columns: repeat(2, minmax(0, 520px)); }
+}
+.statementSimple { text-align: center; max-width: 520px; }
+.stmtIconWrap { display: flex; justify-content: center; margin-bottom: 14px; }
+.stmtIcon { width: 64px; height: 64px; }
+.chips {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+}
+.chip {
+  font-size: 10px; font-weight: 500; padding: 6px 10px; border-radius: 999px;
+  color: #0f172a; background: #f1f5f9; border: 1px solid #e2e8f0;
+}
+
+/* ===== Flip cards (narrow) ===== */
+.flipGridNarrow {
+  display: grid;
+  grid-template-columns: 1fr; /* ✅ single column on mobile */
+  gap: 18px;
+  justify-content: center;
+}
+@media (min-width: 576px) {
+  .flipGridNarrow { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+}
+@media (min-width: 992px) {
+  .flipGridNarrow { grid-template-columns: repeat(4, minmax(220px, 1fr)); }
+}
+.flipItem { perspective: 1000px; }
+.flipInner {
+  position: relative;
+  height: 150px;
+  border-radius: 14px;
+  outline: none;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform .5s;
+  background: transparent;
+}
+.flipInner:focus-visible { box-shadow: 0 0 0 3px rgba(29,78,216,.25); }
+.flipInner:hover { transform: rotateY(180deg); }
+.flipFace {
+  position: absolute; inset: 0; border-radius: 14px; backface-visibility: hidden;
+  padding: 18px; border: 1px solid #e6e8ee; background: #fff;
+  display: grid; place-items: center; text-align: center;
+}
+.flipBack { transform: rotateY(180deg); padding: 18px 16px; }
+.flipIcon { font-size: 28px; color: #1d4ed8; }
+.flipIconImage { display: block; margin: 0 auto 10px; }
+.flipTitle { margin: 8px 0 0; font-weight: 800; }
+
+/* ===== Counters ===== */
+.countersStrip {
+  display: grid;
+  grid-template-columns: 1fr; /* ✅ single column on mobile */
+  gap: 20px;
+  justify-items: center;
+}
+@media (min-width: 576px) {
+  .countersStrip { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+}
+@media (min-width: 992px) {
+  .countersStrip { grid-template-columns: repeat(3, minmax(160px, 1fr)); }
+}
+.counter { text-align: center; }
+.counterNum { font-size: clamp(30px, 4.5vw, 38px); font-weight: 900; line-height: 1; }
+.counterLabel { font-size: 13px; opacity: .85; }
+
+/* ===== FAQ Accordion ===== */
+.accordion { display: grid; gap: 12px; }
+.acItem {
+  border: 1px solid #e6e8ee; border-radius: 12px; background: #fff; overflow: hidden;
+  transition: box-shadow .16s ease, border-color .16s ease;
+}
+.acItem[open] { border-color: rgba(29,78,216,.28); box-shadow: 0 10px 22px rgba(0,0,0,.06); }
+.acSummary {
+  list-style: none; display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 14px 16px; cursor: pointer; font-weight: 700;
+}
+.acSummary::-webkit-details-marker { display: none; }
+.acSummary i { transition: transform .18s ease; }
+.acItem[open] .acSummary i { transform: rotate(45deg); }
+.acPanel { padding: 0 16px 14px 16px; color: #334155; }
+
+/* Tighten FAQ spacing relative to neighbors */
+.faqGap { 
+  margin-top: 28px;     /* reduced top gap */
+}
+.afterFaqTight {
+  margin-top: -36px;    /* pull the CTA up closer below FAQ */
+}

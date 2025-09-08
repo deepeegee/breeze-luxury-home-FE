@@ -182,7 +182,7 @@ const PropertyHeader = ({ property }) => {
 
           {/* NEW: identity row (name + type) BEFORE bed/bath */}
           <div className="id-row mb10">
-            <div className="id-pill name">{p.name || "—"}</div>
+            {/* <div className="id-pill name">{p.name || "—"}</div> */}
             {propertyType ? (
               <div className="id-pill type">
                 <i className="far fa-building me-2" />

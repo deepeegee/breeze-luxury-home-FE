@@ -3,31 +3,50 @@ import DefaultHeader from "@/components/common/DefaultHeader";
 import Footer from "@/components/common/default-footer";
 import MobileMenu from "@/components/common/mobile-menu";
 import Image from "next/image";
-import Link from "next/link";
 import styles from "./about.module.css";
 
-export const metadata = {
-  title: "About — Breeze Luxury Homes Limited",
-};
+export const metadata = { title: "About — Breeze Luxury Homes Limited" };
 
 const About = () => {
+  // First two use flaticon, last two use image icons
+  const whatWeDo = [
+    {
+      iconType: "flaticon",
+      icon: "flaticon-security",
+      title: "Verified Sales & Rentals",
+      text: "Legally secure homes and investments vetted for clear title and approvals.",
+    },
+    {
+      iconType: "flaticon",
+      icon: "flaticon-bird-house",
+      title: "Estate Development",
+      text: "Modern communities planned for livability, infrastructure, and long-term value.",
+    },
+    {
+      iconType: "img",
+      icon: "/images/icon/law.png",
+      title: "Real Estate Legal Support",
+      text: "Contracts, due diligence, and filings handled with full transparency.",
+    },
+    {
+      iconType: "img",
+      icon: "/images/icon/portfolio.png",
+      title: "Portfolio Management",
+      text: "Protect and grow assets with structured, professional oversight.",
+    },
+  ];
+
   return (
     <>
       <DefaultHeader />
       <MobileMenu />
 
-      {/* Breadcrumb (custom, no theme background) */}
-      <section className={styles.breadcrumbSection}>
+      {/* Theme breadcrumb background via wrapper (CSS Modules-safe) */}
+      <section className={`${styles.breadcrumbWrapper} breadcumb-section2 p-0`}>
         <div className="container">
           <div className="row">
             <div className="col-lg-12">
-              <div className={styles.breadcrumb}>
-                {/* <nav aria-label="Breadcrumb" className={styles.breadcrumbNav}>
-                  <ol className={styles.breadcrumbList}>
-                    <li><Link href="/">Home</Link></li>
-                    <li aria-current="page">About</li>
-                  </ol>
-                </nav> */}
+              <div className="breadcumb-style1">
                 <h1 className={styles.breadcrumbTitle}>
                   About Breeze Luxury Homes Limited
                 </h1>
@@ -37,92 +56,205 @@ const About = () => {
         </div>
       </section>
 
-      {/* About */}
-      <section className={`our-about pb90 ${styles.aboutSection}`}>
+      {/* BODY */}
+      <section className={styles.aboutSection}>
         <div className="container">
-          <div className={styles.aboutGrid} data-aos="fade-up" data-aos-delay="300">
-
-            {/* Main content */}
-            <div className={styles.main}>
+          {/* INTRO + vertical label */}
+          <div
+            className={`${styles.sectionGap} ${styles.sideLabelWrap}`}
+            data-aos="fade-up"
+            data-aos-delay="100"
+          >
+            <div className={styles.vertLabel} aria-hidden>
+              ABOUT&nbsp;US
+            </div>
+            <div className={styles.introText}>
               <p className={styles.paragraph}>
-                Breeze Luxury Homes Limited is a fully registered and incorporated real estate and
-                property development company headquartered in Lagos, Nigeria. We specialize in the
-                sale, rental, and development of premium properties and estates, offering our
-                services across various states in Nigeria.
+                Breeze Luxury Homes Limited is a fully registered and
+                incorporated real estate and property development company
+                headquartered in Lagos, Nigeria. We specialize in the sale,
+                rental, and development of premium properties and estates across
+                multiple states in Nigeria.
               </p>
-
-              <h6 className={styles.subtitle}>Our expertise spans:</h6>
-              <ul className={`${styles.list} ${styles.listSplit}`}>
-                <li>Verified property sales and rentals</li>
-                <li>Estate development</li>
-                <li>Real estate legal support</li>
-                <li>Portfolio management</li>
-                <li>Real estate investment advisory</li>
-              </ul>
-
               <p className={styles.paragraph}>
-                Every property in our portfolio is carefully vetted to ensure it is free from legal
-                disputes or government-related issues. We take pride in delivering transparent,
-                secure, and high-value real estate solutions to individuals, investors, and
-                institutions.
+                Every property in our portfolio is thoroughly vetted to ensure
+                it is free from legal disputes or government encumbrances. We
+                deliver transparent, secure, and value-driven real estate
+                solutions to individuals, investors, and institutions.
               </p>
-
               <p className={styles.paragraph}>
-                Our Managing Director brings a strong legal background and in-depth knowledge of
-                real estate and property law, ensuring that every transaction is carried out with
-                full compliance, professional diligence, and client protection.
-              </p>
-
-              <p className={styles.paragraph}>
-                Whether you&apos;re purchasing your first home, expanding your investment portfolio, or
-                seeking sound real estate advice, Breeze Luxury Homes Limited is your reliable
-                partner for smart and secure property solutions.
+                Led by a Managing Director with a strong legal background and
+                deep knowledge of property law, our transactions are carried out
+                with full compliance, professional diligence, and client
+                protection from offer to completion.
               </p>
             </div>
-
-            {/* Side cards */}
-            <aside className={styles.side}>
-              <div className={styles.card}>
-                <h5 className="mb10">Vision Statement</h5>
-                <p className={styles.paragraph}>
-                  To become Nigeria&apos;s most trusted real estate brand, known for legally secure
-                  investments, professional portfolio management, and the development of modern,
-                  luxury living spaces across Africa.
-                </p>
-              </div>
-
-              <div className={styles.card}>
-                <h5 className="mb10">Mission Statement</h5>
-                <ul className={styles.list}>
-                  <li>To deliver verified, risk-free properties and real estate solutions that exceed client expectations.</li>
-                  <li>To combine legal insight, market expertise, and development excellence in every transaction.</li>
-                  <li>To provide investors with professional portfolio management and tailored advisory services.</li>
-                  <li>To promote transparency, integrity, and innovation in the real estate sector.</li>
-                  <li>To support the growth of secure, sustainable, and high-value communities across Nigeria.</li>
-                </ul>
-              </div>
-            </aside>
           </div>
 
-          {/* Banner */}
-          {/* <div className="row mt40" data-aos="fade-up" data-aos-delay="300">
-            <div className="col-lg-12">
-              <div className="about-page-img">
+          {/* VISION & MISSION — side-by-side (stack on mobile), icon on top, no boxes */}
+          <div
+            className={`${styles.sectionGap} ${styles.statementsRow}`}
+            data-aos="fade-up"
+            data-aos-delay="140"
+          >
+            <article className={styles.statementSimple}>
+              <div className={styles.stmtIconWrap}>
                 <Image
-                  width={1206}
-                  height={515}
-                  priority
-                  className="w-100 h-100 cover"
-                  src="/images/about/about-page-banner.jpg"
-                  alt="About Breeze Luxury Homes banner"
+                  src="/images/icon/vision.png"
+                  alt="Our Vision"
+                  width={64}
+                  height={64}
+                  className={styles.stmtIcon}
                 />
               </div>
+              <h5 className="mb10 text-center">Our Vision</h5>
+              <p className="mb-0 text-center">
+                To become Nigeria’s most trusted real estate brand—known for
+                legally secure investments, professional portfolio management,
+                and the development of modern, luxury living across Africa.
+              </p>
+            </article>
+
+            <article className={styles.statementSimple}>
+              <div className={styles.stmtIconWrap}>
+                <Image
+                  src="/images/icon/mission.png"
+                  alt="Our Mission"
+                  width={64}
+                  height={64}
+                  className={styles.stmtIcon}
+                />
+              </div>
+              <h5 className="mb10 text-center">Our Mission</h5>
+              <p className="mb10 text-center">
+                We empower clients with verified, risk-free properties and
+                end-to-end legal support, combining market insight and
+                development excellence to deliver transparent transactions and
+                long-term value.
+              </p>
+              <div className={styles.chips}>
+                <span className={styles.chip}>Verified Properties</span>
+                <span className={styles.chip}>Legal Diligence</span>
+                <span className={styles.chip}>Investor-Focused</span>
+                <span className={styles.chip}>Sustainable Growth</span>
+              </div>
+            </article>
+          </div>
+
+          {/* WHAT WE DO — 4 flip cards, vertical label; responsive */}
+          <div
+            className={`${styles.sectionGap} ${styles.sideLabelWrap}`}
+            data-aos="fade-up"
+            data-aos-delay="170"
+          >
+            <div className={styles.vertLabel} aria-hidden>
+              WHAT&nbsp;WE&nbsp;DO
             </div>
-          </div> */}
+
+            <div>
+              <div className={styles.flipGridNarrow}>
+                {whatWeDo.map((item, i) => (
+                  <div className={styles.flipItem} key={i}>
+                    <div
+                      className={styles.flipInner}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`${item.title} details`}
+                    >
+                      {/* Front */}
+                      <div className={`${styles.flipFace} ${styles.flipFront}`}>
+                        {item.iconType === "flaticon" ? (
+                          <span
+                            className={`${styles.flipIcon} ${item.icon}`}
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <Image
+                            src={item.icon}
+                            alt={item.title}
+                            width={30}
+                            height={30}
+                            className={styles.flipIconImage}
+                          />
+                        )}
+                        <h6 className={styles.flipTitle}>{item.title}</h6>
+                      </div>
+                      {/* Back */}
+                      <div className={`${styles.flipFace} ${styles.flipBack}`}>
+                        <p className="mb-0 fz14">{item.text}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* COUNTERS — bigger top gap for hierarchy */}
+          <div
+            className={`${styles.sectionGapXL} ${styles.countersStrip}`}
+            data-aos="fade-up"
+            data-aos-delay="200"
+          >
+            <div className={styles.counter}>
+              <div className={styles.counterNum}>250+</div>
+              <div className={styles.counterLabel}>Verified Properties</div>
+            </div>
+            <div className={styles.counter}>
+              <div className={styles.counterNum}>120+</div>
+              <div className={styles.counterLabel}>Happy Investors</div>
+            </div>
+            <div className={styles.counter}>
+              <div className={styles.counterNum}>15+</div>
+              <div className={styles.counterLabel}>Cities Covered</div>
+            </div>
+          </div>
+
+          {/* FAQ — tightened top/bottom gap */}
+          <section
+            className={`${styles.faqGap} ${styles.sideLabelWrap}`}
+            data-aos="fade-up"
+            data-aos-delay="240"
+          >
+            <div className={styles.vertLabel} aria-hidden>
+              FAQ
+            </div>
+            <div>
+              <div className={styles.accordion}>
+                {[
+                  {
+                    q: "How are properties verified?",
+                    a: "We run title checks, confirm seller authority, and validate planning approvals to ensure each listing is clean and dispute-free.",
+                  },
+                  {
+                    q: "Do you handle legal documentation?",
+                    a: "Yes. Our legal expertise covers contracts, due diligence, and regulatory filings — ensuring compliant, transparent transactions.",
+                  },
+                  {
+                    q: "Can you advise on investment strategy?",
+                    a: "Absolutely. We provide data-led guidance on location, pricing, cash flow, and exit strategies tailored to your goals.",
+                  },
+                ].map((item, i) => (
+                  <details className={styles.acItem} key={i}>
+                    <summary className={styles.acSummary}>
+                      <span>{item.q}</span>
+                      <i className="far fa-plus" aria-hidden />
+                    </summary>
+                    <div className={styles.acPanel}>
+                      <p className="mb-0">{item.a}</p>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </section>
         </div>
       </section>
 
-      <CallToActions />
+      {/* Pull CTA closer to FAQ */}
+      <div className={styles.afterFaqTight}>
+        <CallToActions />
+      </div>
 
       <section className="footer-style1 pt60 pb-0">
         <Footer />

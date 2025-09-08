@@ -48,7 +48,7 @@ const CallToActions = () => {
                 </Link>
                 <Link href="/contact" className="ud-btn btn-dark">
                   <span className="flaticon-call vam pe-2" />
-                  0814 882 7901{" "}
+                  +234 814 882 7901{" "}
                 </Link>
               </div>
             </div>

@@ -61,7 +61,7 @@ const Testimonial = () => {
     <div className={styles.wrapper}>
       {/* Testimonial content */}
       <div className={styles.content}>
-        <span className={styles.quote}>“</span>
+        {/* <span className={styles.quote}>“</span> */}
         <p className={styles.text}>{testimonials[activeIndex].text}</p>
         <h6 className={styles.name}>{testimonials[activeIndex].name}</h6>
         <p className={styles.design}>{testimonials[activeIndex].designation}</p>

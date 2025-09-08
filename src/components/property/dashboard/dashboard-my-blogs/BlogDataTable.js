@@ -4,15 +4,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 /* ---------- helpers ---------- */
-
-const thumbFrom = (post) => {
-  // prefer header image, then first inline asset, else placeholder
-  return (
-    post?.headerImageUrl ||
-    (Array.isArray(post?.assets?.inline) && post.assets.inline[0]?.url) ||
-    "/images/blogs/placeholder.jpg"
-  );
-};
+const thumbFrom = (post) =>
+  post?.headerImageUrl ||
+  (Array.isArray(post?.assets?.inline) && post.assets.inline[0]?.url) ||
+  "/images/blogs/placeholder.jpg";
 
 const fmtDate = (d) => {
   if (!d) return "—";
@@ -55,7 +50,11 @@ const statusPill = (published) =>
 
 const BlogDataTable = ({
   search = "",
-  sort = "Newest", // "Newest" | "Oldest" | "A–Z"
+  status = "All",            // "All" | "Published" | "Draft"
+  sort = "Newest",           // "Newest" | "Oldest" | "A–Z"
+  currentPage = 1,
+  itemsPerPage = 10,
+  setTotalItems = () => {},
 }) => {
   const [raw, setRaw] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -80,13 +79,11 @@ const BlogDataTable = ({
         if (alive) setLoading(false);
       }
     })();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, []);
 
-  // local text filter
-  const filtered = useMemo(() => {
+  // 1) text filter
+  const filteredByText = useMemo(() => {
     const q = normalize(search);
     if (!q) return raw;
     return raw.filter((p) => {
@@ -95,31 +92,50 @@ const BlogDataTable = ({
         p?.slug,
         p?.description,
         Array.isArray(p?.tags) ? p.tags.join(",") : "",
-      ]
-        .filter(Boolean)
-        .join(" | ")
-        .toLowerCase();
+      ].filter(Boolean).join(" | ").toLowerCase();
       return hay.includes(q);
     });
   }, [raw, search]);
 
-  // sorting
+  // 2) status filter
+  const filtered = useMemo(() => {
+    if (status === "All") return filteredByText;
+    const wantPublished = status === "Published";
+    return filteredByText.filter((p) => !!p?.published === wantPublished);
+  }, [filteredByText, status]);
+
+  // 3) sorting
   const sorted = useMemo(() => {
     const arr = [...filtered];
-    if (sort === "Oldest")
+    if (sort === "Oldest") {
       return arr.sort(
         (a, b) =>
-          new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime()
+          new Date(a?.publishedAt || a?.createdAt || 0) -
+          new Date(b?.publishedAt || b?.createdAt || 0)
       );
-    if (sort === "A–Z")
+    }
+    if (sort === "A–Z") {
       return arr.sort((a, b) => normalize(a?.title).localeCompare(normalize(b?.title)));
-    // default: Newest (prefer publishedAt, then createdAt)
+    }
+    // default: Newest (prefer publishedAt)
     return arr.sort(
       (a, b) =>
-        new Date(b?.publishedAt || b?.createdAt || 0).getTime() -
-        new Date(a?.publishedAt || a?.createdAt || 0).getTime()
+        new Date(b?.publishedAt || b?.createdAt || 0) -
+        new Date(a?.publishedAt || a?.createdAt || 0)
     );
   }, [filtered, sort]);
+
+  // ✅ Inform parent AFTER render when total changes
+  useEffect(() => {
+    setTotalItems(sorted.length);
+  }, [sorted.length, setTotalItems]);
+
+  // 4) pagination (client-side) — compute slice only
+  const paged = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return sorted.slice(start, end);
+  }, [sorted, currentPage, itemsPerPage]);
 
   const onDelete = async (id) => {
     if (!id) return;
@@ -143,7 +159,9 @@ const BlogDataTable = ({
 
     // optimistic
     setSavingId(id);
-    setRaw((prev) => prev.map((p) => ((p?.id ?? p?._id) === id ? { ...p, published: next } : p)));
+    setRaw((prev) =>
+      prev.map((p) => ((p?.id ?? p?._id) === id ? { ...p, published: next } : p))
+    );
 
     try {
       const res = await fetch(`/api/admins/posts/${id}`, {
@@ -155,7 +173,9 @@ const BlogDataTable = ({
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
     } catch (e) {
       // revert
-      setRaw((prev) => prev.map((p) => ((p?.id ?? p?._id) === id ? { ...p, published: !next } : p)));
+      setRaw((prev) =>
+        prev.map((p) => ((p?.id ?? p?._id) === id ? { ...p, published: !next } : p))
+      );
       alert(e?.message || "Failed to update");
     } finally {
       setSavingId(null);
@@ -178,13 +198,23 @@ const BlogDataTable = ({
       </thead>
 
       <tbody className="t-body">
-        {sorted.map((p) => {
+        {paged.map((p) => {
           const id = p?.id ?? p?._id;
           const slug = p?.slug;
           const img = thumbFrom(p);
           const when = p?.publishedAt || p?.createdAt;
           const created = fmtDate(when);
           const isPublished = !!p?.published;
+
+          const uniqueTags = (() => {
+            const bucket = [];
+            if (Array.isArray(p?.tags)) bucket.push(...p.tags);
+            if (typeof p?.tags === "string") bucket.push(p.tags);
+            if (p?.tag) bucket.push(p.tag);
+            if (p?.tagsCsv) bucket.push(...String(p.tagsCsv).split(","));
+            if (p?.category) bucket.push(p.category);
+            return Array.from(new Set(bucket.map((s) => String(s).trim()).filter(Boolean)));
+          })();
 
           return (
             <tr key={id}>
@@ -199,10 +229,11 @@ const BlogDataTable = ({
                         {p?.title || "Untitled post"}
                       </Link>
                     </div>
-                    {Array.isArray(p?.tags) && p.tags.length > 0 && (
+
+                    {uniqueTags.length > 0 && (
                       <p className="list-text mb-0">
-                        {p.tags.slice(0, 4).map((t) => (
-                          <span key={t} className="badge bg-light text-dark border me-1">
+                        {uniqueTags.slice(0, 4).map((t, i) => (
+                          <span key={`${t}-${i}`} className="badge bg-light text-dark border me-1">
                             {t}
                           </span>
                         ))}
@@ -236,11 +267,7 @@ const BlogDataTable = ({
                   >
                     {savingId === id ? "Saving…" : isPublished ? "Unpublish" : "Publish"}
                   </button>
-                  <button
-                    className="ud-btn btn-light"
-                    type="button"
-                    onClick={() => onDelete(id)}
-                  >
+                  <button className="ud-btn btn-light" type="button" onClick={() => onDelete(id)}>
                     Delete
                   </button>
                 </div>
@@ -251,7 +278,10 @@ const BlogDataTable = ({
       </tbody>
 
       <style jsx>{`
-        .list-thumb img { object-fit: cover; border-radius: 8px; }
+        .list-thumb img {
+          object-fit: cover;
+          border-radius: 8px;
+        }
       `}</style>
     </table>
   );

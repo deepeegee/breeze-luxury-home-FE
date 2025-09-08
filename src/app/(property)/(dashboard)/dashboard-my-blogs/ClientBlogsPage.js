@@ -3,37 +3,28 @@
 import { useState } from "react";
 import DashboardHeader from "@/components/common/DashboardHeader";
 import MobileMenu from "@/components/common/mobile-menu";
-import Pagination from "@/components/property/Pagination";
 import Footer from "@/components/property/dashboard/Footer";
 import SidebarDashboard from "@/components/property/dashboard/SidebarDashboard";
-import FilterHeader from "@/components/property/dashboard/dashboard-my-properties/FilterHeader";
-import PropertyDataTable from "@/components/property/dashboard/dashboard-my-properties/PropertyDataTable";
 import DboardMobileNavigation from "@/components/property/dashboard/DboardMobileNavigation";
+import FilterHeader from "@/components/property/dashboard/dashboard-my-blogs/FilterHeader";
+import BlogDataTable from "@/components/property/dashboard/dashboard-my-blogs/BlogDataTable";
+import Pagination from "@/components/property/Pagination";
 
-const DashboardMyProperties = () => {
+export default function ClientBlogsPage() {
   // paging
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [totalItems, setTotalItems] = useState(0);
 
-  // filters & sort (these were previously undefined)
+  // filters & sort
   const [search, setSearch] = useState("");
-  const [availability, setAvailability] = useState("All"); // "All" | "For sale" | "Sold"
-  const [sort, setSort] = useState("Best Match");
+  const [status, setStatus] = useState("All");   // "All" | "Published" | "Draft"
+  const [sort, setSort] = useState("Newest");    // "Newest" | "Oldest" | "A–Z"
 
-  // When filters change, it's nice to jump back to page 1
-  const handleSearchChange = (v) => {
-    setSearch(v);
-    setCurrentPage(1);
-  };
-  const handleAvailabilityChange = (v) => {
-    setAvailability(v);
-    setCurrentPage(1);
-  };
-  const handleSortChange = (v) => {
-    setSort(v);
-    setCurrentPage(1);
-  };
+  // reset to page 1 on changes
+  const onSearchChange = (v) => { setSearch(v); setCurrentPage(1); };
+  const onStatusChange = (v) => { setStatus(v); setCurrentPage(1); };
+  const onSortChange   = (v) => { setSort(v);   setCurrentPage(1); };
 
   return (
     <>
@@ -55,18 +46,18 @@ const DashboardMyProperties = () => {
               <div className="row align-items-center pb40">
                 <div className="col-xxl-3">
                   <div className="dashboard_title_area">
-                    <h2>My Properties</h2>
+                    <h2>My Blogs</h2>
+                    <p className="text">All your posts at a glance.</p>
                   </div>
                 </div>
-
                 <div className="col-xxl-9">
                   <FilterHeader
                     search={search}
-                    onSearchChange={handleSearchChange}
-                    availability={availability}
-                    onAvailabilityChange={handleAvailabilityChange}
+                    onSearchChange={onSearchChange}
+                    status={status}
+                    onStatusChange={onStatusChange}
                     sort={sort}
-                    onSortChange={handleSortChange}
+                    onSortChange={onSortChange}
                   />
                 </div>
               </div>
@@ -75,15 +66,14 @@ const DashboardMyProperties = () => {
                 <div className="col-xl-12">
                   <div className="ps-widget bgc-white bdrs12 default-box-shadow2 p30 mb30 overflow-hidden position-relative">
                     <div className="packages_table table-responsive">
-                      <PropertyDataTable
+                      <BlogDataTable
                         search={search}
-                        availability={availability}
+                        status={status}
                         sort={sort}
                         currentPage={currentPage}
                         itemsPerPage={itemsPerPage}
                         setTotalItems={setTotalItems}
                       />
-
                       <div className="mt30">
                         <Pagination
                           totalItems={totalItems}
@@ -103,6 +93,4 @@ const DashboardMyProperties = () => {
       </div>
     </>
   );
-};
-
-export default DashboardMyProperties;
+}

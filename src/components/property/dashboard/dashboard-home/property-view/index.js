@@ -92,75 +92,226 @@ const PropertyViews = ({ propertyId: propId }) => {
   return (
     <div className="col-md-12">
       <div className="navtab-style1">
-        <div className="d-sm-flex align-items-center justify-content-between">
-          <div className="d-flex align-items-center gap-3 flex-wrap">
-            {/* GLOBAL summary (all properties) */}
-            <h4 className="title fz17 mb20 m-0">
-              All Properties Views {isLoading ? "(…)" : `(${fmt(globalTotalAllTime)})`}
-            </h4>
-
-            {/* Selected property summary */}
-            <div className="badge bg-light text-dark rounded-pill px-3 py-2">
-              Selected Property: {isLoading ? "…" : fmt(selectedTotal)} total • Today {fmt(globalToday)}
+        {/* ======= Stat cards + selector (matching look) ======= */}
+        <div className="mb20">
+          <div className="pv-grid">
+            {/* Global block */}
+            <div className="pv-stat">
+              <div className="pv-stat__label">All Properties</div>
+              <div className="pv-stat__row">
+                <span>Total:</span>
+                <strong>{isLoading ? "…" : fmt(globalTotalAllTime)}</strong>
+              </div>
+              <div className="pv-stat__row">
+                <span>Today:</span>
+                <strong>{isLoading ? "…" : fmt(globalToday)}</strong>
+              </div>
             </div>
 
-            {/* Property picker only on dashboard (no [id]) */}
-            {showSelector && (
-              <div className="d-flex align-items-center">
-                <label className="me-2 mb-0">Property:</label>
-                <select
-                  className="form-select"
-                  value={id || ""}
-                  onChange={(e) => setChosenId(e.target.value)}
-                  disabled={loadingListings}
-                  style={{ minWidth: 260 }}
-                >
-                  {listings.map((p) => (
-                    <option key={String(p.id)} value={String(p.id)}>
-                      {p.title || p.name || p.propertyId || String(p.id)}
-                    </option>
-                  ))}
-                </select>
+            {/* Selected property block */}
+            <div className="pv-stat">
+              <div className="pv-stat__label">Selected Property</div>
+              <div className="pv-stat__row">
+                <span>Total:</span>
+                <strong>{isLoading ? "…" : fmt(selectedTotal)}</strong>
               </div>
-            )}
-          </div>
+              <div className="pv-stat__row">
+                <span>Today:</span>
+                <strong>{isLoading ? "…" : fmt(todayCount)}</strong>
+              </div>
+            </div>
 
-          <ul className="nav nav-tabs border-bottom-0 mb30" id="myTab" role="tablist">
-            <li className="nav-item">
-              <a className="nav-link active" id="hourly-tab" data-bs-toggle="tab" href="#hourly" role="tab" aria-controls="hourly" aria-selected="true">
-                Hours
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" id="weekly-tab" data-bs-toggle="tab" href="#weekly" role="tab" aria-controls="weekly" aria-selected="false">
-                Weekly
-              </a>
-            </li>
-            <li className="nav-item">
-              <a className="nav-link" id="monthly-tab" data-bs-toggle="tab" href="#monthly" role="tab" aria-controls="monthly" aria-selected="false">
-                Monthly
-              </a>
-            </li>
-          </ul>
+            {/* Selector block (matches stat card) */}
+            <div className="pv-stat pv-stat--selector">
+              <div className="pv-stat__label">Property</div>
+              {showSelector ? (
+                <div className="pv-selectWrap">
+                  <select
+                    className="pv-select"
+                    value={id || ""}
+                    onChange={(e) => setChosenId(e.target.value)}
+                    disabled={loadingListings}
+                  >
+                    {listings.map((p) => (
+                      <option key={String(p.id)} value={String(p.id)}>
+                        {p.title || p.name || p.propertyId || String(p.id)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="text-muted small">Using route property</div>
+              )}
+            </div>
+          </div>
         </div>
 
+        {/* Tabs */}
+        <ul className="nav nav-tabs border-bottom-0 mb30 pv-tabs" id="myTab" role="tablist">
+          <li className="nav-item">
+            <a
+              className="nav-link active"
+              id="hourly-tab"
+              data-bs-toggle="tab"
+              href="#hourly"
+              role="tab"
+              aria-controls="hourly"
+              aria-selected="true"
+            >
+              Hours
+            </a>
+          </li>
+          <li className="nav-item">
+            <a
+              className="nav-link"
+              id="weekly-tab"
+              data-bs-toggle="tab"
+              href="#weekly"
+              role="tab"
+              aria-controls="weekly"
+              aria-selected="false"
+            >
+              Weekly
+            </a>
+          </li>
+          <li className="nav-item">
+            <a
+              className="nav-link"
+              id="monthly-tab"
+              data-bs-toggle="tab"
+              href="#monthly"
+              role="tab"
+              aria-controls="monthly"
+              aria-selected="false"
+            >
+              Monthly
+            </a>
+          </li>
+        </ul>
+
+        {/* ======= Charts ======= */}
         <div className="tab-content" id="myTabContent2">
           {/* We only have daily data; Hours uses today's total for the selected property */}
-          <div className="tab-pane fade show active" id="hourly" role="tabpanel" aria-labelledby="hourly-tab" style={{ height: "500px", maxHeight: "100%" }}>
+          <div
+            className="tab-pane fade show active"
+            id="hourly"
+            role="tabpanel"
+            aria-labelledby="hourly-tab"
+            style={{ height: "500px", maxHeight: "100%" }}
+          >
             <HoursBarChart propertyId={id} total={todayCount} />
           </div>
 
-          <div className="tab-pane fade w-100" id="weekly" role="tabpanel" aria-labelledby="weekly-tab" style={{ height: "500px" }}>
+          <div
+            className="tab-pane fade w-100"
+            id="weekly"
+            role="tabpanel"
+            aria-labelledby="weekly-tab"
+            style={{ height: "500px" }}
+          >
             <div className="chart-container">
               <WeeklyLineChart propertyId={id} total={last7DaysTotal} />
             </div>
           </div>
 
-          <div className="tab-pane fade" id="monthly" role="tabpanel" aria-labelledby="monthly-tab" style={{ height: "500px" }}>
+          <div
+            className="tab-pane fade"
+            id="monthly"
+            role="tabpanel"
+            aria-labelledby="monthly-tab"
+            style={{ height: "500px" }}
+          >
             <MonthlyPieChart propertyId={id} total={last12MonthsTotal} />
           </div>
         </div>
       </div>
+
+      {/* Scoped styles for the stat cards & selector */}
+      <style jsx>{`
+        /* grid for header cards */
+        .pv-grid {
+          display: grid;
+          gap: 12px;
+          grid-template-columns: 1fr;
+        }
+        @media (min-width: 576px) {
+          .pv-grid {
+            grid-template-columns: repeat(2, minmax(240px, 1fr));
+          }
+        }
+        @media (min-width: 992px) {
+          .pv-grid {
+            grid-template-columns: repeat(3, minmax(260px, 1fr));
+          }
+        }
+
+        .pv-stat {
+          background: #fff;
+          border: 1px solid #e6e8ee;
+          border-radius: 12px;
+          padding: 12px 14px;
+          min-width: 0;
+          height: 100%;
+          box-shadow: 0 3px 10px rgba(0,0,0,.03);
+        }
+        .pv-stat__label {
+          font-weight: 800;
+          font-size: 12px;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+          color: #475569;
+          margin-bottom: 8px;
+        }
+        .pv-stat__row {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          gap: 10px;
+          font-size: 14px;
+          color: #0f172a;
+        }
+        .pv-stat__row + .pv-stat__row { margin-top: 6px; }
+        .pv-stat__row strong {
+          font-size: 16px;
+          font-weight: 900;
+        }
+
+        /* Selector card / input */
+        .pv-stat--selector { display: flex; flex-direction: column; justify-content: center; }
+        .pv-selectWrap { margin-top: 2px; }
+        .pv-select {
+          appearance: none;
+          width: 100%;
+          padding: 10px 14px;
+          border-radius: 10px;
+          border: 1px solid #e6e8ee;
+          background: #f8fafc;
+          color: #0f172a;
+          font-size: 14px;
+          line-height: 1.2;
+          outline: none;
+          transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+          background-image:
+            linear-gradient(180deg, transparent, transparent),
+            url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23677' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+          background-repeat: no-repeat;
+          background-position: right 10px center;
+          background-size: 18px 18px;
+        }
+        .pv-select:hover { background: #f1f5f9; }
+        .pv-select:focus {
+          border-color: rgba(29,78,216,.35);
+          box-shadow: 0 0 0 4px rgba(29,78,216,.12);
+          background: #fff;
+        }
+
+        /* Tabs breathing room */
+        .pv-tabs { margin-top: 6px; }
+
+        @media (max-width: 575px) {
+          .pv-stat { width: 100%; }
+        }
+      `}</style>
     </div>
   );
 };

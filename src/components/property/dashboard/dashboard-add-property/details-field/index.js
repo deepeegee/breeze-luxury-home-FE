@@ -4,37 +4,27 @@ import MultiSelectField from "./MultiSelectField";
 
 const DetailsFiled = () => {
   return (
-    <div className="form-style1">
+    <div className="form-style1" autoComplete="off">
       <div className="row">
-        {/* Land size (posts as sizeInFt for BE) */}
+        {/* Land size */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">Land size (sq ft)</label>
+            <label className="heading-color ff-heading fw600 mb10">
+              Land size (sq ft)
+            </label>
             <input
               type="number"
               min={0}
               className="form-control"
               placeholder="e.g., 5000"
-              name="sizeInFt"  // keep key for BE
+              name="sizeInFt"
+              autoComplete="off"
             />
           </div>
         </div>
+        <MultiSelectField />
 
-        {/* Rooms (optional) */}
-        {/* <div className="col-sm-6 col-xl-4">
-          <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">Rooms</label>
-            <input
-              type="number"
-              min={1}
-              className="form-control"
-              placeholder="e.g., 6"
-              name="rooms"
-            />
-          </div>
-        </div> */}
-
-        {/* Bedrooms (required) */}
+        {/* Bedrooms */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
             <label className="heading-color ff-heading fw600 mb10">Bedrooms</label>
@@ -45,11 +35,12 @@ const DetailsFiled = () => {
               placeholder="e.g., 4"
               name="bedrooms"
               required
+              autoComplete="off"
             />
           </div>
         </div>
 
-        {/* Bathrooms (required) */}
+        {/* Bathrooms */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
             <label className="heading-color ff-heading fw600 mb10">Bathrooms</label>
@@ -60,14 +51,17 @@ const DetailsFiled = () => {
               placeholder="e.g., 4"
               name="bathrooms"
               required
+              autoComplete="off"
             />
           </div>
         </div>
 
-        {/* Year built (optional) */}
+        {/* Year built */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">Year built (numeric)</label>
+            <label className="heading-color ff-heading fw600 mb10">
+              Year built (numeric)
+            </label>
             <input
               type="number"
               min={1800}
@@ -75,58 +69,100 @@ const DetailsFiled = () => {
               className="form-control"
               placeholder="e.g., 2023"
               name="yearBuilt"
+              autoComplete="off"
             />
           </div>
         </div>
 
-        {/* Available from (optional) */}
-        <div className="col-sm-6 col-xl-4">
+        {/* Available from */}
+        {/* <div className="col-sm-6 col-xl-4">
           <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">Available from (date)</label>
-            <input type="date" className="form-control" name="availableFrom" />
+            <label className="heading-color ff-heading fw600 mb10">
+              Available from (date)
+            </label>
+            <input
+              type="date"
+              className="form-control"
+              name="availableFrom"
+              autoComplete="off"
+            />
           </div>
-        </div>
+        </div> */}
 
         {/* Optional text fields */}
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
             <label className="heading-color ff-heading fw600 mb10">Basement</label>
-            <input type="text" className="form-control" placeholder="Optional" name="basement" />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Optional"
+              name="basement"
+              autoComplete="off"
+            />
           </div>
         </div>
 
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">Extra details</label>
-            <input type="text" className="form-control" placeholder="Optional" name="extraDetails" />
+            <label className="heading-color ff-heading fw600 mb10">
+              Extra details
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Optional"
+              name="extraDetails"
+              autoComplete="off"
+            />
           </div>
         </div>
 
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
             <label className="heading-color ff-heading fw600 mb10">Roofing</label>
-            <input type="text" className="form-control" placeholder="Optional" name="roofing" />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Optional"
+              name="roofing"
+              autoComplete="off"
+            />
           </div>
         </div>
 
         <div className="col-sm-6 col-xl-4">
           <div className="mb20">
-            <label className="heading-color ff-heading fw600 mb10">Exterior Material</label>
-            <input type="text" className="form-control" placeholder="Optional" name="exteriorMaterial" />
+            <label className="heading-color ff-heading fw600 mb10">
+              Exterior Material
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Optional"
+              name="exteriorMaterial"
+              autoComplete="off"
+            />
           </div>
         </div>
       </div>
 
       <div className="row">
-        {/* Floors number (optional) */}
-        <MultiSelectField />
+        {/* Floors */}
 
+        {/* Notes */}
         <div className="col-sm-12">
           <div className="mb20">
             <label className="heading-color ff-heading fw600 mb10">
               Owner/Agent notes (not visible on front end)
             </label>
-            <textarea cols={30} rows={5} placeholder="Optional internal notes..." name="internalNotes" />
+            <textarea
+              cols={30}
+              rows={5}
+              placeholder="Optional internal notes..."
+              name="internalNotes"
+              autoComplete="off"
+            />
           </div>
         </div>
       </div>

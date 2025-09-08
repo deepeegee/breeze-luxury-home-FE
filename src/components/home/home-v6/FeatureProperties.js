@@ -69,7 +69,7 @@ export default function FeatureProperties() {
   return (
     <>
       <Swiper
-        spaceBetween={20} /* tighter, consistent gap */
+        spaceBetween={12} /* tighter gap */
         modules={[Navigation, Pagination, Autoplay]}
         navigation={{
           nextEl: ".featurePro_next__active",
@@ -78,15 +78,15 @@ export default function FeatureProperties() {
         pagination={{ el: ".featurePro_pagination__active", clickable: true }}
         autoplay={{ delay: 5000, disableOnInteraction: false }}
         loop
-        slidesPerView={2}
+        slidesPerView={1} /* default mobile */
         breakpoints={{
-          300: { slidesPerView: 1, spaceBetween: 16 },
-          768: { slidesPerView: 2, spaceBetween: 18 },
-          1024: { slidesPerView: 2, spaceBetween: 20 },
-          1200: { slidesPerView: 2, spaceBetween: 20 },
+          480:  { slidesPerView: 1, spaceBetween: 12 },
+          768:  { slidesPerView: 2, spaceBetween: 12 },
+          1024: { slidesPerView: 3, spaceBetween: 12 }, /* three cards on desktop */
+          1280: { slidesPerView: 3, spaceBetween: 14 },
         }}
       >
-        {properties.slice(0, 6).map((listing, idx) => {
+        {properties.slice(0, 9).map((listing, idx) => {
           const id = pickId(listing);
           const key =
             id != null
@@ -132,7 +132,7 @@ export default function FeatureProperties() {
                       className="thumb-img"
                       src={listing.image || "/images/listings/property_slide_1.jpg"}
                       alt={listing.title ?? propertyName ?? "property"}
-                      sizes="(max-width: 768px) 100vw, 360px"
+                      sizes="(max-width: 1024px) 50vw, 340px"
                       priority={false}
                     />
                   )}
@@ -220,30 +220,25 @@ export default function FeatureProperties() {
         </div>
       </div>
 
-      {/* === Clean, uniform sizing + stretched link === */}
+      {/* === 3-up layout, uniform sizing, tight gaps === */}
       <style jsx>{`
-        /* Center slim cards inside each slide */
+        /* Center cards inside each slide */
         :global(.swiper-slide) {
           display: flex;
           justify-content: center;
         }
 
         /* Full-card overlay link */
-        .stretched {
-          position: absolute;
-          inset: 0;
-          z-index: 10;
-        }
+        .stretched { position: absolute; inset: 0; z-index: 10; }
 
-        /* Fixed-size card = identical width/height across slides */
+        /* Fixed-size card = identical width/height */
         .card-fixed {
           position: relative;
           display: flex;
           flex-direction: column;
-          width: 360px;   /* slimmer & consistent */
-          height: 560px;  /* consistent */
+          width: 340px;   /* slimmer so 3 fit comfortably */
+          height: 560px;
           margin: 0 auto;
-          margin-bottom: 20px;
           border-radius: 14px;
           overflow: hidden;
           background: #fff;
@@ -251,15 +246,12 @@ export default function FeatureProperties() {
           transition: transform .18s ease, box-shadow .18s ease;
           cursor: pointer;
         }
-        .card-fixed:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 14px 28px rgba(0,0,0,.08);
-        }
+        .card-fixed:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(0,0,0,.08); }
 
         /* Fixed image area for perfect alignment */
         .list-thumb {
-          position: relative; /* for <Image fill> */
-          height: 260px;      /* uniform image height */
+          position: relative;
+          height: 260px;
           background: #f3f4f6;
           border-radius: 14px 14px 0 0;
           overflow: hidden;
@@ -277,17 +269,15 @@ export default function FeatureProperties() {
           object-position: center !important;
         }
 
-        /* Content stays inside fixed card height */
         .list-content {
           display: flex;
           flex-direction: column;
           gap: 10px;
           padding: 18px 18px 16px;
           flex: 1 1 auto;
-          overflow: hidden; /* prevent variable height from long content */
+          overflow: hidden;
         }
 
-        /* Clamp long title/location so cards don't grow */
         .list-title {
           margin: 0;
           font-size: 18px;
@@ -311,7 +301,6 @@ export default function FeatureProperties() {
           overflow: hidden;
         }
 
-        /* Type chip */
         .type-chip {
           align-self: flex-start;
           background: #eef2ff;
@@ -342,25 +331,10 @@ export default function FeatureProperties() {
           pointer-events: none;
         }
 
-        .list-meta {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px 18px;
-          margin-top: auto; /* pin the meta row to the bottom neatly */
-        }
-        .meta {
-          font-size: 15px;
-          font-weight: 700;
-          color: #0f172a;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          line-height: 1.3;
-          pointer-events: none;
-        }
+        .list-meta { display: flex; flex-wrap: wrap; gap: 12px 18px; margin-top: auto; }
+        .meta { font-size: 15px; font-weight: 700; color: #0f172a; display: inline-flex; align-items: center; gap: 8px; line-height: 1.3; pointer-events: none; }
         .meta-icon { font-size: 18px; }
 
-        /* Badges */
         .status-badge,
         .featured-badge {
           position: absolute;
@@ -382,11 +356,7 @@ export default function FeatureProperties() {
         .status-badge { top: 12px; left: 12px; }
         .status-badge.sale { background: linear-gradient(135deg,#22c55e,#16a34a); }
         .status-badge.sold { background: linear-gradient(135deg,#ef4444,#dc2626); }
-        .featured-badge {
-          top: 12px; right: 12px;
-          background: linear-gradient(135deg,#2563eb,#1d4ed8);
-          border: 1px solid rgba(29,78,216,.25);
-        }
+        .featured-badge { top: 12px; right: 12px; background: linear-gradient(135deg,#2563eb,#1e40af); border: 1px solid rgba(29,78,216,.25); }
 
         .list-price {
           position: absolute;
@@ -399,7 +369,6 @@ export default function FeatureProperties() {
           font-weight: 700;
           font-size: 13px;
           line-height: 1.1;
-          width: auto;
           max-width: calc(100% - 24px);
           pointer-events: none;
         }

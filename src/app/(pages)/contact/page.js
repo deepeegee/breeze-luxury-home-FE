@@ -60,7 +60,7 @@ const Contact = () => {
                       </strong>
                     </p>
                     <h6 className="info-phone">
-                      <a href="tel:+2348148827901">0814 882 7901</a>
+                      <a href="tel:+2348148827901">+234 814 882 7901</a>
                     </h6>
                     <h6 className="info-mail">
                       <a href="mailto:info@breezeluxuryhomes.com">

@@ -1,12 +1,13 @@
+// ContactMeta.jsx
 import React from "react";
 
-const ContactMeta = () => {
+const ContactMeta = ({ compact = false }) => {
   const contactInfoList = [
     {
       id: 1,
       title:
         "7, Rasaki Balogun Street, Atlantic View Estate, Off Alpha Beach Road, Lekki Peninsula, Lagos, Nigeria",
-      phone: "0814 882 7901",
+      phone: "+234 814 882 7901",
       phoneHref: "tel:+2348148827901",
     },
     {
@@ -17,9 +18,9 @@ const ContactMeta = () => {
   ];
 
   return (
-    <div className="row mb-4 mb-lg-5">
+    <div className={`row ${compact ? "mb-2" : "mb-4 mb-lg-5"}`}>
       {contactInfoList.map((contact, index) => (
-        <div className="col-12 mb-3" key={index}>
+        <div className={`col-12 ${compact ? "mb-2" : "mb-3"}`} key={index}>
           <div className="contact-info">
             {contact.title && <p className="info-title">{contact.title}</p>}
             {contact.phone && (

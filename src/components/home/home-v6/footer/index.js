@@ -44,18 +44,20 @@ const Footer = () => {
           {/* End .col */}
 
           <div className="col-md-6 col-lg-4 offset-lg-2">
-            <div className="footer-widget mb-4 mb-lg-5">
-              <ContactMeta />
-              <div className="footer-widget mb-4 mb-lg-5">
-                <div className="mailchimp-widget mb-4 mb-lg-5">
-                  <h6 className="title text-white mb20">
-                    Keep Yourself Up to Date
-                  </h6>
-                  <Subscribe />
-                </div>
-              </div>
-            </div>
-          </div>
+  {/* one wrapper is enough; reduce margins here */}
+  <div className="footer-widget mb-3 mb-lg-4">
+    <ContactMeta compact />
+
+    {/* no need to nest another footer-widget with big margins */}
+    <div className="mailchimp-widget mt-2">
+      <h6 className="title text-white mb15"> {/* was mb20 */}
+        Keep Yourself Up to Date
+      </h6>
+      <Subscribe />
+    </div>
+  </div>
+</div>
+
           {/* End .col */}
         </div>
         {/* End .row */}

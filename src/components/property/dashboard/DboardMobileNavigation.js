@@ -25,11 +25,11 @@ const DboardMobileNavigation = () => {
           icon: "flaticon-discovery",
           text: "Dashboard",
         },
-        {
-          href: "/dashboard-message",
-          icon: "flaticon-chat-1",
-          text: "Message",
-        },
+        // {
+        //   href: "/dashboard-message",
+        //   icon: "flaticon-chat-1",
+        //   text: "Message",
+        // },
       ],
     },
     {
@@ -60,11 +60,11 @@ const DboardMobileNavigation = () => {
     {
       title: "MANAGE ACCOUNT",
       items: [
-        {
-          href: "/dashboard-my-profile",
-          icon: "flaticon-user",
-          text: "My Profile",
-        },
+        // {
+        //   href: "/dashboard-my-profile",
+        //   icon: "flaticon-user",
+        //   text: "My Profile",
+        // },
         {
           href: "/login",
           icon: "flaticon-logout",

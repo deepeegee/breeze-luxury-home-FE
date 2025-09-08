@@ -5,7 +5,7 @@ const ContactInfo = () => {
     {
       id: 1,
       title: "7, Rasaki Balogun Street, Atlantic View Estate, Off Alpha Beach Road, Lekki Peninsula, Lagos, Nigeria",
-      phone: "0814 882 7901",
+      phone: "+234 814 882 7901",
       phoneHref: "tel:+2348148827901", // Updated phoneHref to use "tel" URI
     },
     {

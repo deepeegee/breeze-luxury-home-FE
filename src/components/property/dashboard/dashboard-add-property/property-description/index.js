@@ -4,7 +4,10 @@ import Select from "react-select";
 import { CATEGORY_OPTIONS, DOCUMENT_GROUPS } from "@/constants/propertyOptions";
 
 const slug = (s) =>
-  String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  String(s)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 
 const PropertyDescription = () => {
   const listedInOptions = [
@@ -54,12 +57,13 @@ const PropertyDescription = () => {
               placeholder="Property title"
               name="title"
               required
+              autoComplete="off"
             />
           </div>
         </div>
 
         {/* Marketing / display name (optional) */}
-        <div className="col-sm-12">
+        {/* <div className="col-sm-12">
           <div className="mb20">
             <label className="heading-color ff-heading fw600 mb10">
               Name (optional)
@@ -69,9 +73,10 @@ const PropertyDescription = () => {
               className="form-control"
               placeholder="e.g., Sky Tower Apartment"
               name="name"
+              autoComplete="off"
             />
           </div>
-        </div>
+        </div> */}
 
         {/* Description */}
         <div className="col-sm-12">
@@ -161,40 +166,42 @@ const PropertyDescription = () => {
             />
           </div>
         </div>
-{/* Listed In */}
-<div className="col-sm-6 col-xl-4">
-  <div className="mb20">
-    <label className="heading-color ff-heading fw600 mb10">
-      Listed In
-    </label>
-    <div className="location-area">
-      {showSelect && (
-        <Select
-          inputId="listedIn"
-          options={[
-            { value: "All Listing", label: "All Listing" },
-            { value: "Active", label: "Active" },
-            { value: "Sold", label: "Sold" },
-          ]}
-          styles={customStyles}
-          className="select-custom pl-0"
-          classNamePrefix="select"
-          placeholder="Select listed state"
-          /* mirror into hidden input via local state (like category/status) */
-          value={
-            listedIn
-              ? [{ value: "All Listing", label: "All Listing" },
-                 { value: "Active", label: "Active" },
-                 { value: "Sold", label: "Sold" }].find((o) => o.value === listedIn) || null
-              : null
-          }
-          onChange={(opt) => setListedIn(opt?.value ?? "")}
-          isClearable
-        />
-      )}
-    </div>
-  </div>
-</div>
+        {/* Listed In */}
+        <div className="col-sm-6 col-xl-4">
+          <div className="mb20">
+            <label className="heading-color ff-heading fw600 mb10">
+              Listed In
+            </label>
+            <div className="location-area">
+              {showSelect && (
+                <Select
+                  inputId="listedIn"
+                  options={[
+                    { value: "All Listing", label: "All Listing" },
+                    { value: "Active", label: "Active" },
+                    { value: "Sold", label: "Sold" },
+                  ]}
+                  styles={customStyles}
+                  className="select-custom pl-0"
+                  classNamePrefix="select"
+                  placeholder="Select listed state"
+                  /* mirror into hidden input via local state (like category/status) */
+                  value={
+                    listedIn
+                      ? [
+                          { value: "All Listing", label: "All Listing" },
+                          { value: "Active", label: "Active" },
+                          { value: "Sold", label: "Sold" },
+                        ].find((o) => o.value === listedIn) || null
+                      : null
+                  }
+                  onChange={(opt) => setListedIn(opt?.value ?? "")}
+                  isClearable
+                />
+              )}
+            </div>
+          </div>
+        </div>
 
         {/* Property Documents (embedded) */}
         <div className="col-12">
@@ -218,7 +225,7 @@ const PropertyDescription = () => {
                               <input
                                 id={id}
                                 type="checkbox"
-                                name="documents"   // backend receives as documents[]
+                                name="documents" // backend receives as documents[]
                                 value={label}
                               />
                               <span className="checkmark" />

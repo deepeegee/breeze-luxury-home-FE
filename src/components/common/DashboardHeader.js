@@ -66,7 +66,7 @@ const DashboardHeader = () => {
               </div>
 
               {/* RIGHT */}
-              <div className="col-6 col-lg-auto">
+              {/* <div className="col-6 col-lg-auto">
                 <div className="text-center text-lg-end header_right_widgets">
                   <ul className="mb0 d-flex justify-content-center justify-content-sm-end p-0">
                     <li className="d-none d-sm-block">
@@ -122,7 +122,7 @@ const DashboardHeader = () => {
                     </li>
                   </ul>
                 </div>
-              </div>
+              </div> */}
             </div>
             {/* End .row */}
           </div>

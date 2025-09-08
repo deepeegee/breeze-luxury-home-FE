@@ -20,11 +20,11 @@ const fmtPrice = (n) => {
   try {
     return n.toLocaleString(undefined, {
       style: "currency",
-      currency: "USD",
+      currency: "NGN",
       maximumFractionDigits: 0,
     });
   } catch {
-    return `$${Number(n).toLocaleString()}`;
+    return `₦${Number(n).toLocaleString()}`;
   }
 };
 
@@ -84,10 +84,18 @@ const availabilityClass = (label) => {
   return "badge rounded-pill bg-secondary-subtle text-secondary-emphasis";
 };
 
+const mapAvailabilityForAPI = (uiVal) => {
+  // UI shows "For sale" but data uses "Available"
+  if (!uiVal || uiVal === "All") return "";
+  if (uiVal === "For sale") return "Available";
+  return uiVal; // "Sold"
+};
+
 /* ---------- component ---------- */
 
 const PropertyDataTable = ({
   search = "",
+  availability = "All",   // <-- NEW: "All" | "For sale" | "Sold"
   sort = "Best Match",
   currentPage = 1,
   itemsPerPage = 10,
@@ -96,7 +104,7 @@ const PropertyDataTable = ({
   const [raw, setRaw] = useState([]);           // array of properties (page or full set)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [meta, setMeta] = useState({            // server pagination metadata (if provided)
+  const [meta, setMeta] = useState({
     total: 0,
     serverPaginated: false,
   });
@@ -114,9 +122,8 @@ const PropertyDataTable = ({
   const apiSort = useMemo(() => {
     if (sort === "Price Low") return "price_asc";
     if (sort === "Price High") return "price_desc";
-    if (sort === "Best Seller") return "newest"; // re-using "Best Seller" to mean newest as you had
-    // "Best Match" (default) -> let server decide or default to newest
-    return "relevance";
+    if (sort === "Best Seller") return "newest"; // reuse as newest
+    return "relevance"; // "Best Match"
   }, [sort]);
 
   // fetch from backend (server pagination if supported)
@@ -131,6 +138,10 @@ const PropertyDataTable = ({
         params.set("limit", String(itemsPerPage));
         if (search?.trim()) params.set("q", search.trim());
         if (apiSort) params.set("sort", apiSort);
+
+        // NEW: add availability when not "All"
+        const apiAvail = mapAvailabilityForAPI(availability);
+        if (apiAvail) params.set("availability", apiAvail);
 
         const res = await fetch(`/api/properties?${params.toString()}`, {
           credentials: "include",
@@ -153,10 +164,6 @@ const PropertyDataTable = ({
           return;
         }
 
-        // Accept several shapes from API:
-        // 1) { data: [...], total: n }
-        // 2) { items: [...], total: n }
-        // 3) [...]
         const json = await res.json();
         let data = [];
         let total = 0;
@@ -186,19 +193,15 @@ const PropertyDataTable = ({
     };
     run();
     return () => ac.abort();
-  }, [currentPage, itemsPerPage, search, apiSort]);
+  }, [currentPage, itemsPerPage, search, apiSort, availability]);
 
-  // inform parent about total items
+  // inform parent about total items (server-paginated only)
   useEffect(() => {
     if (meta.serverPaginated) setTotalItems(meta.total);
-    else {
-      // client-side: total is after text filter (below), so update from that
-      // we update again after computing filtered/sorted length in a second effect
-      setTotalItems(meta.total || 0);
-    }
+    else setTotalItems(meta.total || 0);
   }, [meta.serverPaginated, meta.total, setTotalItems]);
 
-  // text filter (client-side, in case server didn't handle it)
+  // 1) text filter
   const filteredByText = useMemo(() => {
     const q = normalize(search);
     if (!q) return raw;
@@ -211,9 +214,16 @@ const PropertyDataTable = ({
     });
   }, [raw, search]);
 
-  // sorting (client-side as a safety net; if server already sorted, this keeps order consistent)
+  // 2) availability filter (client-side safety)
+  const filtered = useMemo(() => {
+    if (availability === "All") return filteredByText;
+    const desired = normalize(mapAvailabilityForAPI(availability)); // "available" | "sold"
+    return filteredByText.filter((p) => normalize(p?.propertyAvailability) === desired);
+  }, [filteredByText, availability]);
+
+  // sorting
   const sorted = useMemo(() => {
-    const arr = [...filteredByText];
+    const arr = [...filtered];
     const byPriceAsc = (a, b) => (a?.price ?? 0) - (b?.price ?? 0);
     const byPriceDesc = (a, b) => (b?.price ?? 0) - (a?.price ?? 0);
     const byNewest = (a, b) =>
@@ -235,7 +245,7 @@ const PropertyDataTable = ({
       });
     }
     return arr.sort(byNewest);
-  }, [filteredByText, sort, search]);
+  }, [filtered, sort, search]);
 
   // client-side pagination slice (only if server didn't paginate)
   const pageSlice = useMemo(() => {
@@ -263,7 +273,6 @@ const PropertyDataTable = ({
         setMeta((m) => ({ ...m, total: Math.max(0, (m.total || 1) - 1) }));
         setTotalItems((t) => Math.max(0, t - 1));
       } else {
-        // remove from full set (affects subsequent pagination)
         setRaw((prev) => prev.filter((p) => (p?.id ?? p?._id) !== id));
       }
     } catch (e) {
@@ -463,7 +472,6 @@ const PropertyDataTable = ({
         </div>
       )}
 
-      {/* ✅ Single merged style block */}
       <style jsx>{`
         /* Thumbnail styles */
         .thumb-box {
@@ -481,9 +489,7 @@ const PropertyDataTable = ({
         @media (max-width: 576px) {
           .thumb-box { width: 112px; }
         }
-        .listing-style1.dashboard-style {
-          gap: 14px;
-        }
+        .listing-style1.dashboard-style { gap: 14px; }
         @media (min-width: 1400px) {
           .listing-style1.dashboard-style { gap: 16px; }
         }
@@ -494,7 +500,7 @@ const PropertyDataTable = ({
           overflow: hidden;
         }
 
-        /* Modal styles merged here */
+        /* Modal */
         .blh-modal-wrap { position: fixed; inset: 0; z-index: 1050; }
         .blh-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(2px); }
         .blh-modal { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(520px, 92vw); background: #fff; border-radius: 12px; padding: 16px 16px 14px; }

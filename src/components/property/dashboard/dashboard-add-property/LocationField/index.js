@@ -126,6 +126,7 @@ const LocationField = () => {
               placeholder="e.g., Victoria Garden City"
               name="address"
               required
+              autoComplete="off"
             />
           </div>
         </div>
@@ -156,7 +157,8 @@ const LocationField = () => {
               type="text"
               className="form-control"
               placeholder="e.g., Lekki Phase 1"
-              name="city"  /* ← IMPORTANT: neighborhood goes into BE 'city' */
+              name="city" 
+              autoComplete="off"
             />
           </div>
         </div>

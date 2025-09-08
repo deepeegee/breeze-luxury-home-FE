@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function Details({ blog }) {
   return (
-    <div className="container ">
+    <div className="container">
       <div className="row" data-aos="fade-up" data-aos-delay="100">
         <div className="col-lg-12">
           <h2 className="blog-title mt50">
@@ -19,9 +19,9 @@ export default function Details({ blog }) {
                 src={blog?.author?.image || "/images/blog/author-1.png"}
                 alt="author"
               />
-              <span className="pr15 bdrr1">
+              {/* <span className="pr15 bdrr1">
                 {blog?.author?.name || "Admin"}
-              </span>
+              </span> */}
               <span className="ml15 pr15 bdrr1">
                 {blog?.tags?.join(", ") || "Uncategorized"}
               </span>
@@ -62,6 +62,25 @@ export default function Details({ blog }) {
           dangerouslySetInnerHTML={{ __html: blog?.description || "" }}
         />
       </div>
+
+      {/* Scoped styling for images and videos */}
+      <style jsx global>{`
+        .blog-content img {
+          max-width: 100%;
+          height: auto;
+          display: block;
+          margin: 1rem auto;
+          border-radius: 8px;
+        }
+
+        .blog-content iframe,
+        .blog-content video {
+          max-width: 100%;
+          height: auto;
+          display: block;
+          margin: 1rem auto;
+        }
+      `}</style>
     </div>
   );
 }
