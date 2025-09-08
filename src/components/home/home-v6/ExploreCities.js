@@ -7,7 +7,7 @@ const CITIES = [
   { name: "Ikoyi",           image: "/images/cities/Eko-Atlantic.jpg" },
   { name: "Victoria Island", image: "/images/cities/Ibeju-Lekki.jpg" },
   { name: "Ikeja",           image: "/images/cities/Ikoyi.jpg" },
-  { name: "Yaba",            image: "/images/cities/VI.jpg" },
+  { name: "Abuja",            image: "/images/cities/VI.jpg" },
 ];
 
 export default function ExploreCities() {

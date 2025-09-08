@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 
-const CITIES = ["Lekki", "Ikoyi", "Victoria Island", "Ikeja", "Yaba"];
+const CITIES = ["Lekki", "Ikoyi", "Victoria Island", "Ikeja", "Abuja"];
 
 const MenuWidget = () => {
   const menuSections = [
