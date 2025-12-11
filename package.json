@@ -39,7 +39,7 @@
     "eslint": "9.27.0",
     "lodash.throttle": "^4.1.1",
     "naija-state-local-government": "^1.1.2",
-    "next": "^15.4.6",
+    "next": "^15.4.8",
     "photoswipe": "^5.4.4",
     "prop-types": "15.8.1",
     "rc-slider": "^11.1.8",
