@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { useListings } from "@/lib/useApi";
@@ -12,38 +13,24 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 
-/* ---------- helpers (same as grid) ---------- */
-const pickId = (listing) => {
-  let possibleId =
-    listing?.id ??
-    listing?._id ??
-    listing?.slug ??
-    listing?.propertyId ??
-    listing?.listingId ??
-    listing?.uuid;
-
-  if (!possibleId) {
-    if (listing?.title && listing?.city) {
-      possibleId = `${listing.city.toLowerCase().replace(/\s+/g, "-")}-${listing.title
-        .toLowerCase()
-        .replace(/\s+/g, "-")}`;
-    } else if (listing?.title) {
-      possibleId = listing.title.toLowerCase().replace(/\s+/g, "-");
-    } else if (listing?.city) {
-      possibleId = listing.city.toLowerCase().replace(/\s+/g, "-");
-    }
-  }
-  return possibleId;
+/* ---------- helpers ---------- */
+// Prefer the real Mongo id (listing.id from your mapper) so /property/:id works,
+// and SingleV3 will redirect to the pretty slug anyway.
+const pickMongoId = (listing) => {
+  const v = listing?.id ?? listing?._id ?? null;
+  return v != null ? String(v) : "";
 };
 
 function deriveAvailability(p = {}) {
-  const raw = (p.availability || p.status || p.listedIn || "").toString().toLowerCase();
+  const raw = (p.availability || p.status || p.listedIn || "")
+    .toString()
+    .toLowerCase();
   if (raw.includes("sold")) return "Sold";
-  if (raw.includes("available") || raw.includes("active") || raw.includes("publish")) return "For sale";
+  if (raw.includes("available") || raw.includes("active") || raw.includes("publish"))
+    return "For sale";
   return "For sale";
 }
 
-/* pretty-case for labels (same as grid) */
 const pretty = (s) =>
   (s ?? "")
     .toString()
@@ -53,6 +40,7 @@ const pretty = (s) =>
     .replace(/\b\w/g, (m) => m.toUpperCase());
 
 export default function FeatureProperties() {
+  const router = useRouter();
   const { data: allProperties = [], isLoading, error } = useListings();
   const properties = allProperties.filter((p) => p.featured === true);
 
@@ -69,7 +57,7 @@ export default function FeatureProperties() {
   return (
     <>
       <Swiper
-        spaceBetween={12} /* tighter gap */
+        spaceBetween={12}
         modules={[Navigation, Pagination, Autoplay]}
         navigation={{
           nextEl: ".featurePro_next__active",
@@ -78,20 +66,25 @@ export default function FeatureProperties() {
         pagination={{ el: ".featurePro_pagination__active", clickable: true }}
         autoplay={{ delay: 5000, disableOnInteraction: false }}
         loop
-        slidesPerView={1} /* default mobile */
+        slidesPerView={1}
         breakpoints={{
-          480:  { slidesPerView: 1, spaceBetween: 12 },
-          768:  { slidesPerView: 2, spaceBetween: 12 },
-          1024: { slidesPerView: 3, spaceBetween: 12 }, /* three cards on desktop */
+          480: { slidesPerView: 1, spaceBetween: 12 },
+          768: { slidesPerView: 2, spaceBetween: 12 },
+          1024: { slidesPerView: 3, spaceBetween: 12 },
           1280: { slidesPerView: 3, spaceBetween: 14 },
         }}
+        // Helps when Swiper interprets clicks as drag
+        preventClicks={false}
+        preventClicksPropagation={false}
+        touchStartPreventDefault={false}
       >
         {properties.slice(0, 9).map((listing, idx) => {
-          const id = pickId(listing);
-          const key =
-            id != null
-              ? `listing-${String(id)}-${idx}`
-              : `noid-${listing?.city ?? "city"}-${listing?.title ?? "title"}-${idx}`;
+          const mongoId = pickMongoId(listing);
+          const href = mongoId ? `/property/${encodeURIComponent(mongoId)}` : "";
+
+          const key = mongoId
+            ? `listing-${mongoId}-${idx}`
+            : `noid-${listing?.city ?? "city"}-${listing?.title ?? "title"}-${idx}`;
 
           const availability = deriveAvailability(listing);
           const isSold = availability === "Sold";
@@ -107,12 +100,22 @@ export default function FeatureProperties() {
 
           const propertyName = listing?.name ? pretty(listing.name) : "";
 
-          const href = id ? `/single-v3/${encodeURIComponent(String(id))}` : undefined;
+          const go = () => {
+            if (href) router.push(href);
+          };
 
           return (
             <SwiperSlide key={key}>
-              <div className={`listing-style1 ${isSold ? "is-sold" : "is-sale"} card-fixed`}>
-                {/* Full-card overlay link (big click target) */}
+              <div
+                className={`listing-style1 ${isSold ? "is-sold" : "is-sale"} card-fixed`}
+                role="link"
+                tabIndex={0}
+                onClick={go}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") go();
+                }}
+              >
+                {/* Full-card overlay link for SEO + normal navigation */}
                 {href && (
                   <Link
                     href={href}
@@ -120,22 +123,20 @@ export default function FeatureProperties() {
                     aria-label={`Open ${listing?.title ?? "property"}`}
                     prefetch={false}
                   >
-                    <span aria-hidden="true" />
+                    <span className="sr-only">Open</span>
                   </Link>
                 )}
 
                 {/* ===== Fixed-height image ===== */}
                 <div className="list-thumb">
-                  {(listing.image || "/images/listings/property_slide_1.jpg") && (
-                    <Image
-                      fill
-                      className="thumb-img"
-                      src={listing.image || "/images/listings/property_slide_1.jpg"}
-                      alt={listing.title ?? propertyName ?? "property"}
-                      sizes="(max-width: 1024px) 50vw, 340px"
-                      priority={false}
-                    />
-                  )}
+                  <Image
+                    fill
+                    className="thumb-img"
+                    src={listing.image || "/images/listings/property_slide_1.jpg"}
+                    alt={listing.title ?? propertyName ?? "property"}
+                    sizes="(max-width: 1024px) 50vw, 340px"
+                    priority={false}
+                  />
 
                   {/* Status badge */}
                   <span
@@ -143,7 +144,11 @@ export default function FeatureProperties() {
                     aria-label={availability}
                     title={availability}
                   >
-                    <i className={`fas ${isSold ? "fa-ban" : "fa-check-circle"} me-2`} />
+                    <i
+                      className={`fas ${
+                        isSold ? "fa-ban" : "fa-check-circle"
+                      } me-2`}
+                    />
                     {isSold ? "SOLD" : "FOR SALE"}
                   </span>
 
@@ -157,14 +162,18 @@ export default function FeatureProperties() {
 
                   {/* Price chip */}
                   {listing?.price != null && (
-                    <div className="list-price">₦{Number(listing.price).toLocaleString()}</div>
+                    <div className="list-price">
+                      ₦{Number(listing.price).toLocaleString()}
+                    </div>
                   )}
                 </div>
 
                 {/* ===== Body ===== */}
                 <div className="list-content">
                   {(listing?.title || propertyName) && (
-                    <h6 className="list-title">{listing?.title || propertyName || "Property"}</h6>
+                    <h6 className="list-title">
+                      {listing?.title || propertyName || "Property"}
+                    </h6>
                   )}
 
                   {propertyType && <span className="type-chip">{propertyType}</span>}
@@ -191,7 +200,8 @@ export default function FeatureProperties() {
                       )}
                       {showSqft && (
                         <span className="meta">
-                          <span className="flaticon-expand meta-icon" /> {listing.sqft.toLocaleString()} sq ft
+                          <span className="flaticon-expand meta-icon" />{" "}
+                          {listing.sqft.toLocaleString()} sq ft
                         </span>
                       )}
                     </div>
@@ -203,7 +213,7 @@ export default function FeatureProperties() {
         })}
       </Swiper>
 
-      {/* Controls (unchanged) */}
+      {/* Controls */}
       <div className="row align-items-center justify-content-center mt30">
         <div className="col-auto">
           <button className="featurePro_prev__active swiper_button" aria-label="Previous">
@@ -220,35 +230,39 @@ export default function FeatureProperties() {
         </div>
       </div>
 
-      {/* === 3-up layout, uniform sizing, tight gaps === */}
       <style jsx>{`
-        /* Center cards inside each slide */
         :global(.swiper-slide) {
           display: flex;
           justify-content: center;
         }
 
         /* Full-card overlay link */
-        .stretched { position: absolute; inset: 0; z-index: 10; }
+        .stretched {
+          position: absolute;
+          inset: 0;
+          z-index: 50;
+          display: block;
+        }
 
-        /* Fixed-size card = identical width/height */
         .card-fixed {
           position: relative;
           display: flex;
           flex-direction: column;
-          width: 340px;   /* slimmer so 3 fit comfortably */
+          width: 340px;
           height: 560px;
           margin: 0 auto;
           border-radius: 14px;
           overflow: hidden;
           background: #fff;
-          box-shadow: 0 10px 24px rgba(0,0,0,.06);
-          transition: transform .18s ease, box-shadow .18s ease;
+          box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
           cursor: pointer;
         }
-        .card-fixed:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(0,0,0,.08); }
+        .card-fixed:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08);
+        }
 
-        /* Fixed image area for perfect alignment */
         .list-thumb {
           position: relative;
           height: 260px;
@@ -257,9 +271,16 @@ export default function FeatureProperties() {
           overflow: hidden;
           flex: 0 0 auto;
         }
-        @media (max-width: 575px) { .list-thumb { height: 240px; } }
+        @media (max-width: 575px) {
+          .list-thumb {
+            height: 240px;
+          }
+        }
 
-        .thumb-img { object-fit: cover; object-position: center; }
+        .thumb-img {
+          object-fit: cover;
+          object-position: center;
+        }
         .list-thumb :global(img) {
           position: absolute !important;
           inset: 0 !important;
@@ -289,6 +310,7 @@ export default function FeatureProperties() {
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
+
         .list-text {
           margin: 0;
           font-size: 15px;
@@ -308,7 +330,7 @@ export default function FeatureProperties() {
           border: 1px solid #c7d2fe;
           font-weight: 700;
           font-size: 12px;
-          letter-spacing: .2px;
+          letter-spacing: 0.2px;
           padding: 6px 10px;
           border-radius: 999px;
           pointer-events: none;
@@ -331,9 +353,25 @@ export default function FeatureProperties() {
           pointer-events: none;
         }
 
-        .list-meta { display: flex; flex-wrap: wrap; gap: 12px 18px; margin-top: auto; }
-        .meta { font-size: 15px; font-weight: 700; color: #0f172a; display: inline-flex; align-items: center; gap: 8px; line-height: 1.3; pointer-events: none; }
-        .meta-icon { font-size: 18px; }
+        .list-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px 18px;
+          margin-top: auto;
+        }
+        .meta {
+          font-size: 15px;
+          font-weight: 700;
+          color: #0f172a;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          line-height: 1.3;
+          pointer-events: none;
+        }
+        .meta-icon {
+          font-size: 18px;
+        }
 
         .status-badge,
         .featured-badge {
@@ -343,26 +381,38 @@ export default function FeatureProperties() {
           align-items: center;
           font-weight: 800;
           font-size: 12px;
-          letter-spacing: .2px;
+          letter-spacing: 0.2px;
           padding: 9px 14px;
           border-radius: 999px;
           color: #fff;
-          box-shadow: 0 8px 22px rgba(0,0,0,.18);
-          -webkit-backdrop-filter: saturate(140%) blur(4px);
+          box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
           backdrop-filter: saturate(140%) blur(4px);
           white-space: normal;
           pointer-events: none;
         }
-        .status-badge { top: 12px; left: 12px; }
-        .status-badge.sale { background: linear-gradient(135deg,#22c55e,#16a34a); }
-        .status-badge.sold { background: linear-gradient(135deg,#ef4444,#dc2626); }
-        .featured-badge { top: 12px; right: 12px; background: linear-gradient(135deg,#2563eb,#1e40af); border: 1px solid rgba(29,78,216,.25); }
+        .status-badge {
+          top: 12px;
+          left: 12px;
+        }
+        .status-badge.sale {
+          background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+        .status-badge.sold {
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .featured-badge {
+          top: 12px;
+          right: 12px;
+          background: linear-gradient(135deg, #2563eb, #1e40af);
+          border: 1px solid rgba(29, 78, 216, 0.25);
+        }
 
         .list-price {
           position: absolute;
           bottom: 12px;
           left: 12px;
-          background: rgba(0,0,0,.65);
+          background: rgba(0, 0, 0, 0.65);
           color: #fff;
           padding: 8px 10px;
           border-radius: 10px;
@@ -373,7 +423,9 @@ export default function FeatureProperties() {
           pointer-events: none;
         }
 
-        .listing-style1.is-sold { opacity: 0.95; }
+        .listing-style1.is-sold {
+          opacity: 0.95;
+        }
       `}</style>
     </>
   );
