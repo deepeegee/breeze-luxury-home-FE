@@ -16,14 +16,23 @@ const ModalVideo = ({ isOpen, setIsOpen, provider, url, embedSrc, title }) => {
   const isDirect = p === "direct";
 
   return (
-    <div style={overlayStyle} onClick={closeModal} role="dialog" aria-modal="true">
+    <div
+      style={overlayStyle}
+      onClick={closeModal}
+      role="dialog"
+      aria-modal="true"
+    >
       <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-        <button onClick={closeModal} type="button" style={closeButtonStyle} aria-label="Close video">
-          ×
+        <button
+          onClick={closeModal}
+          type="button"
+          style={closeButtonStyle}
+          aria-label="Close video"
+        >
+          <span style={closeIconStyle}>×</span>
         </button>
 
         <div style={responsiveContainerStyle}>
-          {/* Loader overlay */}
           {!isLoaded && (
             <div style={loaderStyle}>
               <div style={spinnerStyle} />
@@ -73,7 +82,7 @@ const overlayStyle = {
 const modalStyle = {
   position: "relative",
   width: "min(1100px, 96vw)",
-  backgroundColor: "#0b0b0c", // dark surface, no white flash
+  backgroundColor: "#0b0b0c",
   borderRadius: 12,
   overflow: "hidden",
   boxShadow: "0px 12px 40px rgba(0, 0, 0, 0.45)",
@@ -83,16 +92,27 @@ const closeButtonStyle = {
   position: "absolute",
   top: 10,
   right: 10,
+
   width: 38,
   height: 38,
   borderRadius: 999,
-  fontSize: 26,
-  lineHeight: "38px",
+
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+
+  padding: 0,
   background: "rgba(255,255,255,0.14)",
   border: "1px solid rgba(255,255,255,0.18)",
   color: "#fff",
   cursor: "pointer",
   zIndex: 3,
+};
+
+const closeIconStyle = {
+  fontSize: 26,
+  lineHeight: 1,
+  transform: "translateY(-2px)", // tweak up/down if needed
 };
 
 const responsiveContainerStyle = {
