@@ -217,7 +217,9 @@ const AddPropertyTabContent = () => {
       const roofing = strOrUndefined(fd.get("roofing"));
       const exteriorMaterial = strOrUndefined(fd.get("exteriorMaterial"));
       const internalNotes = strOrUndefined(fd.get("internalNotes"));
-
+      const videoProvider = strOrUndefined(fd.get("videoProvider"));
+      const videoUrl = strOrUndefined(fd.get("videoUrl"));
+      
       const base = {
         title: String(title),
         description,
@@ -248,6 +250,8 @@ const AddPropertyTabContent = () => {
 
         nearby,
         isFeatured,
+        videoUrl,
+        videoProvider,
 
         ...(propertyDocuments ? { propertyDocuments } : {}),
         ...(availableFromISO ? { availableFrom: availableFromISO } : {}),

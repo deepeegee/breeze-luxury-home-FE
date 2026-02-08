@@ -2,7 +2,11 @@
 
 /* ===========================================================
    Types (kept compatible with your app)
+   Video now uses ONLY:
+   - videoProvider
+   - videoUrl
 =========================================================== */
+
 export type Listing = {
   id: number | string;
   image: string | null;
@@ -37,8 +41,8 @@ export type Listing = {
 
   // media
   photos?: { url: string; isFeatured?: boolean }[];
-  videoSource?: string;
-  videoEmbedId?: string;
+  videoProvider?: string; // ✅ kept
+  videoUrl?: string;      // ✅ kept
   virtualTourUrl?: string;
 
   // availability / status
@@ -146,9 +150,9 @@ export type PropertyBE = {
   totalFloors?: number;
   floorDetails?: FloorDetailBE[];
 
-  // media
-  videoSource?: string;
-  videoEmbedId?: string;
+  // media (ONLY provider + url)
+  videoProvider?: string; // ✅ kept
+  videoUrl?: string | null; // ✅ kept (null clears)
   virtualTourUrl?: string;
 
   // dates
@@ -204,9 +208,9 @@ export type PropertyDailyViewRow = {
 };
 
 export type GlobalDailyViewRow = {
-  totalViews: number;     // sum across all properties
+  totalViews: number;       // sum across all properties
   propertiesViewed: number; // distinct properties with ≥1 view that day
-  date: string;           // ISO day (UTC midnight)
+  date: string;             // ISO day (UTC midnight)
 };
 
 export type BlogAuthor = {
@@ -346,6 +350,36 @@ function normalizePhotos(input?: PhotoBE[]): { url: string }[] | undefined {
   return items.map(({ url }) => ({ url }));
 }
 
+/* ========= NEW: normalize provider + url ========= */
+function normalizeVideoFields<T extends { videoProvider?: any; videoUrl?: any }>(input: T): T {
+  const out: any = { ...input };
+
+  const provider =
+    typeof out.videoProvider === 'string' ? out.videoProvider.trim() : '';
+
+  if (!provider) {
+    delete out.videoProvider;
+  } else {
+    out.videoProvider = provider;
+  }
+
+  if (typeof out.videoUrl === 'string') {
+    const trimmed = out.videoUrl.trim();
+    out.videoUrl = trimmed ? trimmed : null; // empty clears
+  } else if (out.videoUrl === undefined) {
+    // leave as-is (undefined means "no change" in PATCH)
+  } else if (out.videoUrl === null) {
+    // explicit clear
+    out.videoUrl = null;
+  } else if (out.videoUrl != null) {
+    // coerce other types to string
+    const s = String(out.videoUrl).trim();
+    out.videoUrl = s ? s : null;
+  }
+
+  return out as T;
+}
+
 /* ========= date/aggregation utils (for charts & "today") ========= */
 export function toLocalDayKey(d: string | Date, tz = 'Africa/Lagos') {
   const date = typeof d === 'string' ? new Date(d) : d;
@@ -357,6 +391,7 @@ export function toLocalDayKey(d: string | Date, tz = 'Africa/Lagos') {
   const dd = parts.find(p => p.type === 'day')?.value;
   return `${y}-${m}-${dd}`; // YYYY-MM-DD
 }
+
 export function toMonthKey(d: string | Date, tz = 'Africa/Lagos') {
   const date = typeof d === 'string' ? new Date(d) : d;
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -366,6 +401,7 @@ export function toMonthKey(d: string | Date, tz = 'Africa/Lagos') {
   const m = parts.find(p => p.type === 'month')?.value;
   return `${y}-${m}`; // YYYY-MM
 }
+
 export const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
 
 export function groupDailyToMonthly<T extends { date: string }>(
@@ -393,7 +429,6 @@ export function groupDailyToMonthly<T extends { date: string }>(
   out.sort((a, b) => a.month.localeCompare(b.month));
   return out;
 }
-
 
 /* ========================
    Mappers (BE -> FE)
@@ -458,8 +493,10 @@ function toListing(p: PropertyBE): Listing {
     photos: Array.isArray(p.photos)
       ? p.photos.filter((ph) => typeof ph?.url === 'string' && /^https?:\/\//.test(ph.url))
       : undefined,
-    videoSource: clean(p.videoSource),
-    videoEmbedId: clean(p.videoEmbedId),
+
+    // ✅ video: only provider + url
+    videoProvider: clean((p as any).videoProvider),
+    videoUrl: clean((p as any).videoUrl),
     virtualTourUrl: clean(p.virtualTourUrl),
 
     forRent: typeof p.listedIn === 'string' ? /rent/i.test(p.listedIn) : undefined,
@@ -572,16 +609,30 @@ export function getListing(id: string | number) {
 
 export function createListing(payload: PropertyBE) {
   const photos = normalizePhotos(payload.photos);
+
+  // ✅ normalize video fields for create
+  const normalized = normalizeVideoFields({ ...payload, photos });
+
   return apiFetch<PropertyBE>(`/properties/create`, {
     method: 'POST',
-    body: JSON.stringify({ ...payload, photos }),
-  }).then((res) => toListing(res && Object.keys(res).length ? res : { ...payload, photos }));
+    body: JSON.stringify(normalized),
+  }).then((res) =>
+    toListing(res && Object.keys(res).length ? res : (normalized as PropertyBE))
+  );
 }
 
 export function updateListing(id: string | number, data: Partial<PropertyBE>) {
   const next: Partial<PropertyBE> = { ...data };
+
   if (data.photos) next.photos = normalizePhotos(data.photos) as any;
-  return apiFetch<PropertyBE>(`/properties/${id}`, { method: 'PATCH', body: JSON.stringify(next) }).then(toListing);
+
+  // ✅ normalize provider + url for patch (empty string clears to null)
+  const normalized = normalizeVideoFields(next);
+
+  return apiFetch<PropertyBE>(`/properties/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(normalized),
+  }).then(toListing);
 }
 
 export function deleteListing(id: string | number) {
@@ -684,6 +735,7 @@ type ViewPingPayload = {
   source?: string;
   sessionId?: string;
 };
+
 export async function recordPropertyView(id: string | number, meta: ViewPingPayload = {}) {
   const path = `/properties/${id}/views`;
   const body = JSON.stringify({ ...meta, ts: meta.ts ?? Date.now() });

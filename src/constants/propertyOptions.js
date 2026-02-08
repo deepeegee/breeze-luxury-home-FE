@@ -3,7 +3,7 @@ export const CATEGORY_OPTIONS = [
   "Apartment",
   "Fully-Detached Duplex", // ← keep hyphen to match BE
   "Land",
-  "Hotel",
+  //"Hotel",
   "Farm",
   "Off-plan",
   "Semi-Detached Duplex",

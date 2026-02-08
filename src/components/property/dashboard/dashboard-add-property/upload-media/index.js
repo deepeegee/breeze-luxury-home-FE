@@ -19,7 +19,7 @@ const UploadMedia = () => {
           <VideoOptionFiled />
         </div>
 
-        <div className="row">
+        {/* <div className="row">
           <h4 className="title fz17 mb30">Virtual Tour</h4>
           <div className="col-sm-6 col-xl-12">
             <div className="mb30">
@@ -34,7 +34,7 @@ const UploadMedia = () => {
               />
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

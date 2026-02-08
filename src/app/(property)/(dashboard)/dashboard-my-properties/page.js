@@ -86,6 +86,7 @@ const DashboardMyProperties = () => {
 
                       <div className="mt30">
                         <Pagination
+                          currentPage={currentPage}
                           totalItems={totalItems}
                           itemsPerPage={itemsPerPage}
                           onPageChange={setCurrentPage}
