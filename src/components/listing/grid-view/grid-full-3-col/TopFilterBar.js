@@ -1,7 +1,11 @@
+// ===============================
+// TopFilterBar.jsx
+// ===============================
 "use client";
 
 import React, { useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+
 import ListingStatus from "../../sidebar/ListingStatus";
 import PropertyType from "../../sidebar/PropertyType";
 import PriceRange from "../../sidebar/PriceRange";
@@ -28,6 +32,18 @@ export const TYPE_MAP = new Map([
 export const canonType = (s) => {
   const k = (s ?? "").toString().trim().toLowerCase();
   return TYPE_MAP.get(k) ?? s;
+};
+
+// IMPORTANT: When reading "type" from the URL, we must canonize each item
+// so PropertyType receives the same strings it uses for checked logic.
+const readTypesFromSearchParams = (sp) => {
+  const raw = sp?.get("type");
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((x) => decodeURIComponent(String(x)).trim())
+    .filter(Boolean)
+    .map(canonType);
 };
 
 export default function TopFilterBar() {
@@ -62,10 +78,17 @@ export default function TopFilterBar() {
     const currBeds = getNum(sp.get("beds"), 0);
     const currBaths = getNum(sp.get("baths"), 0);
 
+    // ✅ read currently selected property types from URL (this was the main bug)
+    const currTypes = readTypesFromSearchParams(sp);
+
     // STATUS: write 'available' | 'sold' (blank for All)
-    const currStatus = (sp.get("status") || "").toLowerCase(); // 'available' | 'sold' | ''
+    const currStatus = (sp.get("status") || "").toLowerCase();
     const listingStatus =
-      currStatus === "sold" ? "Sold" : currStatus === "available" ? "Available" : "All";
+      currStatus === "sold"
+        ? "Sold"
+        : currStatus === "available"
+        ? "Available"
+        : "All";
 
     // PRICE
     const currMin = getNum(sp.get("minPrice"), undefined);
@@ -75,20 +98,34 @@ export default function TopFilterBar() {
       // status (labels: 'All' | 'Available' | 'Sold')
       setStatus: (label) => {
         const val = (label || "").toLowerCase();
-        const qVal = val.includes("sold") ? "sold" : val.includes("avail") ? "available" : "";
+        const qVal = val.includes("sold")
+          ? "sold"
+          : val.includes("avail")
+          ? "available"
+          : "";
         updateQuery({ status: qVal });
       },
       // legacy compatibility
       handlelistingStatus: (label) => {
         const val = (label || "").toLowerCase();
-        const qVal = val.includes("sold") ? "sold" : val.includes("avail") ? "available" : "";
+        const qVal = val.includes("sold")
+          ? "sold"
+          : val.includes("avail")
+          ? "available"
+          : "";
         updateQuery({ status: qVal });
       },
       listingStatus,
 
-      // property types
+      // ✅ property types (UI expects propertyTypes to reflect current selection)
+      propertyTypes: currTypes,
       setPropertyTypes: (types = []) => {
-        const norm = (Array.isArray(types) ? types : [types]).map(canonType).filter(Boolean);
+        // accept string or array
+        const arr = Array.isArray(types) ? types : [types];
+        // normalize to canonical values & remove empties & duplicates
+        const norm = Array.from(
+          new Set(arr.map(canonType).map((s) => String(s).trim()).filter(Boolean))
+        );
         updateQuery({ type: norm });
       },
 
@@ -102,8 +139,12 @@ export default function TopFilterBar() {
       priceRange: [currMin ?? 0, currMax ?? 2_000_000_000],
 
       // beds/baths
+      beds: currBeds,
+      baths: currBaths,
       setBeds: (n) => updateQuery({ beds: n ?? "" }),
       setBaths: (n) => updateQuery({ baths: n ?? "" }),
+
+      // legacy aliases (keep if other components still use them)
       handlebedrooms: (n) => updateQuery({ beds: n ?? "" }),
       handlebathroms: (n) => updateQuery({ baths: n ?? "" }),
       bedrooms: currBeds,
@@ -122,12 +163,16 @@ export default function TopFilterBar() {
   }, [sp]);
 
   /* ---------- derive compact trigger labels ---------- */
-  const statusQ = (sp.get("status") || "").toLowerCase(); // 'available' | 'sold' | ''
+  const statusQ = (sp.get("status") || "").toLowerCase();
   const statusLabel =
-    statusQ === "sold" ? "Sold" : statusQ === "available" ? "Available" : "Status";
+    statusQ === "sold"
+      ? "Sold"
+      : statusQ === "available"
+      ? "Available"
+      : "Status";
 
-  const typeQ = sp.get("type"); // e.g. "A,B,C"
-  const typeArr = typeQ ? typeQ.split(",") : [];
+  // ✅ use same reader to build label (so duplex variants show correctly)
+  const typeArr = readTypesFromSearchParams(sp);
   const typeLabel =
     typeArr.length === 0
       ? "Property Type"
@@ -151,7 +196,6 @@ export default function TopFilterBar() {
 
   return (
     <>
-      {/* LEFT: filters only */}
       <div className="col-xl-12">
         <div className="dropdown-lists">
           <ul className="p-0 text-center text-xl-start">
@@ -202,7 +246,6 @@ export default function TopFilterBar() {
               >
                 {priceLabel} <i className="fa fa-angle-down ms-2" />
               </button>
-
               <div className="dropdown-menu dd3">
                 <div className="widget-wrapper mb0 px20">
                   <h6 className="list-title mb10">Price Range</h6>

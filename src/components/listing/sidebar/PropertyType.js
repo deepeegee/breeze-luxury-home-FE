@@ -1,3 +1,10 @@
+// ===============================
+// PropertyType.jsx (FIXED)
+// Key fixes:
+// 1) Uses filterFunctions.propertyTypes (now provided by TopFilterBar)
+// 2) Canonizes selections so checked state matches URL values
+// 3) Duplex group: checks if ANY duplex variant is selected
+// ===============================
 "use client";
 
 const DUPLEX_VARIANTS = [
@@ -10,37 +17,43 @@ const DUPLEX_VARIANTS = [
   "Duplex",
 ];
 
-// Show a single “Duplex (all)” option that controls all duplex variants
 const CAT_OPTIONS = [
   { kind: "group", value: "duplex", label: "Duplex (all)" },
   { kind: "single", value: "Bungalow", label: "Bungalow" },
   { kind: "single", value: "Apartment", label: "Apartments" },
-  // Townhome removed
   { kind: "single", value: "Office", label: "Offices" },
   { kind: "single", value: "Factory", label: "Factory" },
   { kind: "single", value: "Land & Plots", label: "Land & Plots" },
 ];
 
 export default function PropertyType({ filterFunctions = {} }) {
-  const {
-    propertyTypes: selected = [],
-    setPropertyTypes = () => {},
-  } = filterFunctions || {};
+  const selected = Array.isArray(filterFunctions?.propertyTypes)
+    ? filterFunctions.propertyTypes
+    : [];
 
-  // Helpers
-  const hasAny = (arr, set) => arr.some((v) => set.has(v));
-  const selectedSet = new Set(Array.isArray(selected) ? selected : []);
+  const setPropertyTypes =
+    typeof filterFunctions?.setPropertyTypes === "function"
+      ? filterFunctions.setPropertyTypes
+      : () => {};
+
+  const selectedSet = new Set(selected.map((s) => String(s).trim()).filter(Boolean));
+
+  const hasAny = (arr) => arr.some((v) => selectedSet.has(v));
+
+  const isAllChecked = selectedSet.size === 0;
+
+  const isDuplexChecked =
+    selectedSet.has("duplex") || hasAny(DUPLEX_VARIANTS);
 
   const toggleDuplex = () => {
     const next = new Set(selectedSet);
-    const isOn = selectedSet.has("duplex") || hasAny(DUPLEX_VARIANTS, selectedSet);
+    const isOn = next.has("duplex") || DUPLEX_VARIANTS.some((v) => next.has(v));
 
     if (isOn) {
-      // remove group token + every duplex variant
       next.delete("duplex");
       DUPLEX_VARIANTS.forEach((v) => next.delete(v));
     } else {
-      // add group token + variants (max compatibility with strict-equality filters)
+      // keep only canonical values; "duplex" token is optional but harmless
       next.add("duplex");
       DUPLEX_VARIANTS.forEach((v) => next.add(v));
     }
@@ -48,34 +61,32 @@ export default function PropertyType({ filterFunctions = {} }) {
   };
 
   const toggleSingle = (val) => {
+    const v = String(val).trim();
     const next = new Set(selectedSet);
-    if (next.has(val)) next.delete(val);
-    else next.add(val);
+
+    if (next.has(v)) next.delete(v);
+    else next.add(v);
+
+    // if user selects any duplex variant manually, also make duplex group appear checked (optional)
+    // (we already compute isDuplexChecked from variants anyway)
+
     setPropertyTypes(Array.from(next));
   };
 
-  const isAllChecked = selectedSet.size === 0;
-
-  const isDuplexChecked =
-    selectedSet.has("duplex") || DUPLEX_VARIANTS.some((v) => selectedSet.has(v));
-
   return (
     <div>
-      {/* All */}
       <label className="custom_checkbox">
         All
         <input type="checkbox" checked={isAllChecked} onChange={() => setPropertyTypes([])} />
         <span className="checkmark" />
       </label>
 
-      {/* Duplex group */}
       <label className="custom_checkbox" key="duplex">
         Duplex (all)
         <input type="checkbox" checked={isDuplexChecked} onChange={toggleDuplex} />
         <span className="checkmark" />
       </label>
 
-      {/* Singles */}
       {CAT_OPTIONS.filter((o) => o.kind === "single").map((opt) => {
         const checked = selectedSet.has(opt.value);
         return (

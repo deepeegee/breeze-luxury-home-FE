@@ -1,33 +1,36 @@
-'use client'
+// ===============================
+// Bedroom.jsx (clean, consistent)
+// ===============================
+"use client";
 
 import React from "react";
 
-const Bedroom = ({filterFunctions}) => {
+export default function Bedroom({ filterFunctions }) {
   const options = [
-    { id: "any", label: "any",value:0, defaultChecked: true },
-    { id: "oneplus", label: "1+",value:1, },
-    { id: "twoplus", label: "2+" ,value:2,},
-    { id: "threeplus", label: "3+",value:3, },
-    { id: "fourplus", label: "4+",value:4, },
-    { id: "fiveplus", label: "5+",value:5, },
+    { id: "beds-any", label: "Any", value: 0 },
+    { id: "beds-1", label: "1+", value: 1 },
+    { id: "beds-2", label: "2+", value: 2 },
+    { id: "beds-3", label: "3+", value: 3 },
+    { id: "beds-4", label: "4+", value: 4 },
+    { id: "beds-5", label: "5+", value: 5 },
   ];
+
+  const current = Number(filterFunctions?.beds ?? 0);
 
   return (
     <>
-      {options.map((option) => (
-        <div className="selection" key={option.id}>
+      {options.map((opt) => (
+        <div className="selection" key={opt.id}>
           <input
-            id={option.id}
-           
+            id={opt.id}
+            name="beds"
             type="radio"
-            onChange={(e) => filterFunctions?.setBeds(option.value)}
-            checked={filterFunctions?.beds == option.value}            
+            checked={current === opt.value}
+            onChange={() => filterFunctions?.setBeds(opt.value)}
           />
-          <label htmlFor={option.id}>{option.label}</label>
+          <label htmlFor={opt.id}>{opt.label}</label>
         </div>
       ))}
     </>
   );
-};
-
-export default Bedroom;
+}

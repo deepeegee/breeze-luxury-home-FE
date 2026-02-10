@@ -1,35 +1,36 @@
-'use client'
+// ===============================
+// Bathroom.jsx (clean, consistent)
+// ===============================
+"use client";
 
 import React from "react";
 
-const Bathroom = ({filterFunctions}) => {
+export default function Bathroom({ filterFunctions }) {
   const options = [
-    { id: "bathany", label: "any", defaultChecked: true ,value:0},
-    { id: "bathoneplus", label: "1+",value:1 },
-    { id: "bathtwoplus", label: "2+" ,value:2},
-    { id: "baththreeplus", label: "3+",value:3 },
-    { id: "bathfourplus", label: "4+",value:4 },
-    { id: "bathfiveplus", label: "5+",value:5 },
+    { id: "baths-any", label: "Any", value: 0 },
+    { id: "baths-1", label: "1+", value: 1 },
+    { id: "baths-2", label: "2+", value: 2 },
+    { id: "baths-3", label: "3+", value: 3 },
+    { id: "baths-4", label: "4+", value: 4 },
+    { id: "baths-5", label: "5+", value: 5 },
   ];
+
+  const current = Number(filterFunctions?.baths ?? 0);
 
   return (
     <>
-      {options.map((option) => (
-        <div className="selection" key={option.id}>
+      {options.map((opt) => (
+        <div className="selection" key={opt.id}>
           <input
-            id={option.id}
-        
+            id={opt.id}
+            name="baths"
             type="radio"
-            checked={filterFunctions?.bathroms == option.value}
-            
-            onChange={()=>filterFunctions?.setBaths(option.value)}
-            
+            checked={current === opt.value}
+            onChange={() => filterFunctions?.setBaths(opt.value)}
           />
-          <label htmlFor={option.id}>{option.label}</label>
+          <label htmlFor={opt.id}>{opt.label}</label>
         </div>
       ))}
     </>
   );
-};
-
-export default Bathroom;
+}
